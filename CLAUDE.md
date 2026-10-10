@@ -16,7 +16,8 @@ Capstone project for ICS 4111.
 - `backend/` — Flask API
 
 ## Data
-- Source: Open-Meteo historical archive API (ERA5-Land), Nairobi
+- Source: Open-Meteo historical archive API (ERA5), Nairobi. Not ERA5-Land:
+  it returns no precipitation, pressure or wind for this location.
 - Hourly resolution, 2021–2025
 - Features: rainfall, temperature, humidity, pressure, wind speed
 
