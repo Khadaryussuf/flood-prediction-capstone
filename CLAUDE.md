@@ -40,9 +40,12 @@ Capstone project for ICS 4111.
 - Make small, focused commits with clear messages.
 
 ## Commands
-- Install dependencies: TODO
-- Fetch data: TODO
-- Run preprocessing: TODO
-- Train model: TODO
-- Evaluate model: TODO
+Use Python 3.13 (TensorFlow has no 3.14 wheels on Windows). Run from the
+repo root with the venv active.
+- Set up: `py -3.13 -m venv .venv`, `.venv\Scripts\Activate.ps1`,
+  `pip install -r requirements.txt`
+- Fetch data: `python -m pipeline.fetch_data`
+- Run preprocessing: `python -m pipeline.preprocess`
+- Train model: `python -m pipeline.train`
+- Evaluate model: `python -m pipeline.evaluate`
 - Start Flask backend: TODO
