@@ -13,7 +13,8 @@ Capstone project for ICS 4111.
 - `pipeline/` — data fetching and preprocessing
 - `models/` — model definitions, trained models, and fitted scalers
 - `notebooks/` — exploration and experiments
-- `backend/` — Flask API
+- `backend/` — Flask API; `tests/` — pytest; `scripts/` — demo client
+- `experiments/` — saved evaluation runs; `docs/` — testing and report notes
 
 ## Data
 - Source: Open-Meteo historical archive API (ERA5), Nairobi. Not ERA5-Land:
@@ -47,5 +48,7 @@ repo root with the venv active.
 - Fetch data: `python -m pipeline.fetch_data`
 - Run preprocessing: `python -m pipeline.preprocess`
 - Train model: `python -m pipeline.train`
-- Evaluate model: `python -m pipeline.evaluate`
-- Start Flask backend: TODO
+- Evaluate model: `python -m pipeline.evaluate` (writes `experiments/run_<timestamp>/`)
+- Start Flask backend: `python -m backend.app` (http://127.0.0.1:5000)
+- Run tests: `python -m pytest -v` (record results in `docs/TESTING.md`)
+- Demo (server running): `python -m scripts.demo_request`
