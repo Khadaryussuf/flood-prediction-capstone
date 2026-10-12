@@ -77,6 +77,9 @@ def save_json(path, data):
 
 
 def main():
+    # Check git state first, before this run creates any new files
+    git = git_info()
+
     # Load the test windows, the scaler and the trained model
     data = np.load(config.WINDOWS_NPZ)
     X_test, y_test = data["X_test"], data["y_test"]
@@ -137,7 +140,7 @@ def main():
 
     save_json(run_dir / "run_info.json", {
         "timestamp": now.isoformat(timespec="seconds"),
-        **git_info(),
+        **git,
         "dataset_rows": len(pd.read_csv(config.RAW_CSV)),
         "test_samples": len(y_true),
     })
