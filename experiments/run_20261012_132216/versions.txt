@@ -1,0 +1,9 @@
+python==3.13.14
+tensorflow==2.21.0
+keras==3.15.1
+scikit-learn==1.9.1
+pandas==3.0.6
+numpy==2.5.3
+flask==not installed
+sqlalchemy==not installed
+pytest==not installed
