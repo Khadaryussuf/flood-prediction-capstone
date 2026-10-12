@@ -18,8 +18,8 @@ def set_seeds(seed):
 def build_model(n_features):
     model = keras.Sequential([
         keras.Input(shape=(config.WINDOW, n_features)),
-        keras.layers.LSTM(64),
-        keras.layers.Dropout(0.2),
+        keras.layers.LSTM(config.LSTM_UNITS),
+        keras.layers.Dropout(config.DROPOUT),
         keras.layers.Dense(1),
     ])
     model.compile(optimizer="adam", loss="mse")
@@ -35,19 +35,24 @@ def main():
     model = build_model(X_train.shape[2])
     model.summary()
 
+    # Stop when val_loss hasn't improved for a while, and keep the best weights
     early_stop = keras.callbacks.EarlyStopping(
-        monitor="val_loss", patience=10, restore_best_weights=True
+        monitor="val_loss", patience=config.EARLY_STOP_PATIENCE,
+        restore_best_weights=True,
     )
+    # Write epoch, loss and val_loss to a CSV file after every epoch
+    config.LSTM_MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+    csv_logger = keras.callbacks.CSVLogger(config.TRAINING_LOG_PATH)
+
     history = model.fit(
         X_train, y_train,
         validation_data=(X_val, y_val),
-        epochs=100,
-        batch_size=64,
+        epochs=config.MAX_EPOCHS,
+        batch_size=config.BATCH_SIZE,
         shuffle=False,
-        callbacks=[early_stop],
+        callbacks=[early_stop, csv_logger],
     )
 
-    config.LSTM_MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
     model.save(config.LSTM_MODEL_PATH)
 
     val_losses = history.history["val_loss"]
