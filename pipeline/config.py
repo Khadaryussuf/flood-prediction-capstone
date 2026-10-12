@@ -35,6 +35,13 @@ BATCH_SIZE = 64
 MAX_EPOCHS = 100
 EARLY_STOP_PATIENCE = 10
 
+# Flood risk levels from predicted next-hour rainfall (mm).
+# PROVISIONAL: these are generic light/moderate/heavy hourly rain-intensity
+# classes, NOT calibrated against Nairobi flood records. Below 2.5 mm is
+# "low", below 7.6 mm is "moderate", anything higher is "high".
+RISK_THRESHOLDS_MM = [(2.5, "low"), (7.6, "moderate")]
+HIGHEST_RISK = "high"
+
 # Paths
 RAW_CSV = ROOT / "data" / "nairobi_meteorological_raw.csv"
 WINDOWS_NPZ = ROOT / "data" / "processed" / "windows.npz"
