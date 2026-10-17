@@ -1,0 +1,29 @@
+{
+  "window_hours": 24,
+  "splits": {
+    "train": {
+      "start": "2021-01-01T00:00:00",
+      "end": "2024-07-02T03:00:00",
+      "hours": 30676,
+      "samples": 30652,
+      "hours_lost_to_windowing": 24
+    },
+    "val": {
+      "start": "2024-07-02T04:00:00",
+      "end": "2025-04-02T01:00:00",
+      "hours": 6574,
+      "samples": 6550,
+      "hours_lost_to_windowing": 24
+    },
+    "test": {
+      "start": "2025-04-02T02:00:00",
+      "end": "2025-12-31T23:00:00",
+      "hours": 6574,
+      "samples": 6550,
+      "hours_lost_to_windowing": 24
+    }
+  },
+  "total_hours": 43824,
+  "total_samples": 43752,
+  "total_hours_lost_to_windowing": 72
+}

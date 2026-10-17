@@ -4,6 +4,8 @@ Order matters to avoid leakage: split by time first, then interpolate
 within each split, then fit the scaler on the training split only.
 """
 
+import json
+
 import joblib
 import numpy as np
 import pandas as pd
@@ -48,6 +50,7 @@ def main():
 
     target_idx = config.FEATURES.index(config.TARGET)
     arrays = {}
+    summary = {"window_hours": config.WINDOW, "splits": {}}
     for name, split in zip(["train", "val", "test"], splits):
         scaled = scaler.transform(split)
         X, y = make_windows(scaled, target_idx)
@@ -55,11 +58,28 @@ def main():
         arrays[f"y_{name}"] = y
         print(f"{name:5s} {split.index.min()} to {split.index.max()}  "
               f"X={X.shape} y={y.shape}")
+        # Windows never cross split boundaries, so each split loses its
+        # first WINDOW hours as targets (they only serve as history).
+        summary["splits"][name] = {
+            "start": split.index.min().isoformat(),
+            "end": split.index.max().isoformat(),
+            "hours": len(split),
+            "samples": len(X),
+            "hours_lost_to_windowing": len(split) - len(X),
+        }
+    summary["total_hours"] = sum(s["hours"] for s in summary["splits"].values())
+    summary["total_samples"] = sum(s["samples"] for s in summary["splits"].values())
+    summary["total_hours_lost_to_windowing"] = (
+        summary["total_hours"] - summary["total_samples"]
+    )
 
     config.WINDOWS_NPZ.parent.mkdir(parents=True, exist_ok=True)
     np.savez(config.WINDOWS_NPZ, **arrays)
+    config.SPLIT_SUMMARY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    config.SPLIT_SUMMARY_PATH.write_text(json.dumps(summary, indent=2) + "\n")
     print(f"Saved windows to {config.WINDOWS_NPZ}")
     print(f"Saved scaler to {config.SCALER_PATH}")
+    print(f"Saved split summary to {config.SPLIT_SUMMARY_PATH}")
 
 
 if __name__ == "__main__":
