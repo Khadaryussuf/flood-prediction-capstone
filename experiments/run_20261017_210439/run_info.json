@@ -1,0 +1,18 @@
+{
+  "model": "cnn_lstm",
+  "timestamp": "2026-10-17T21:04:39",
+  "git_commit": "40adecb5e585b22489a86fe54c89021773499d4f",
+  "git_dirty": false,
+  "dataset_rows": 43824,
+  "val_samples": 6550,
+  "test_samples": 6550,
+  "model_params": 18245,
+  "training": {
+    "model": "cnn_lstm",
+    "params": 18245,
+    "epochs_run": 26,
+    "best_epoch": 16,
+    "best_val_loss": 0.0005240809405222535,
+    "train_seconds": 65.7
+  }
+}

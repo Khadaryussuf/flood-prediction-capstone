@@ -1,0 +1,31 @@
+{
+  "window_hours": 24,
+  "split": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15
+  },
+  "seed": 42,
+  "features": [
+    "precipitation",
+    "temperature_2m",
+    "relative_humidity_2m",
+    "surface_pressure",
+    "wind_speed_10m"
+  ],
+  "target": "precipitation",
+  "heavy_rain_mm": 2.5,
+  "model": {
+    "type": "CNN-LSTM",
+    "conv_filters": 32,
+    "conv_kernel": 3,
+    "pool_size": 2,
+    "lstm_units": 52,
+    "dropout": 0.2,
+    "batch_size": 64,
+    "max_epochs": 100,
+    "early_stop_patience": 10,
+    "optimizer": "adam",
+    "loss": "mse"
+  }
+}
