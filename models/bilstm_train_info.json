@@ -1,0 +1,8 @@
+{
+  "model": "bilstm",
+  "params": 17689,
+  "epochs_run": 16,
+  "best_epoch": 6,
+  "best_val_loss": 0.0005632574902847409,
+  "train_seconds": 68.5
+}
