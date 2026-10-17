@@ -7,10 +7,13 @@ described further down. All of them run with:
 python -m pytest -v
 ```
 
-Each test builds the real app (real `models/lstm_model.keras` and
-`models/scaler.pkl`) with a fresh temporary SQLite database. The valid input
-is the first 24 hours of the real test split (2025-04-02 02:00 to
-2025-04-03 01:00), in raw units.
+Each test builds the real app (real model and `models/scaler.pkl`) with a
+fresh temporary SQLite database. The valid input is the first 24 hours of the
+real test split (2025-04-02 02:00 to 2025-04-03 01:00), in raw units.
+
+The table below is the 2026-10-12 run, when the app served
+`models/lstm_model.keras`. Since 2026-10-17 it serves the CNN-LSTM; see
+"API switched to the CNN-LSTM" at the end for the updated results.
 
 Run recorded: 2026-10-12, at commit `c942a72`. Result: **7 passed in 1.29 s**
 (Python 3.13.14, pytest 9.1.1). The status codes and messages in the Actual
@@ -67,3 +70,37 @@ Checks done outside pytest during the comparison:
 | Issue | How it was found | Corrective action |
 |-------|------------------|-------------------|
 | `run_info.json` always had `git_dirty: true`, even with a clean working tree | First run of the new `pipeline/evaluate.py` showed `true` right after committing | The git check ran after the run folder was created, so it saw its own new files. Moved the check to the start of `main()` (commit `6f34008`), deleted the bad run folder, and re-ran. `git_dirty` is now `false`. |
+
+## API switched to the CNN-LSTM (deliberate change)
+
+On 2026-10-17 the API's default model changed from the LSTM
+(`models/lstm_model.keras`) to the CNN-LSTM (`models/cnn_lstm_model.keras`),
+the model chosen by the validation rule in `docs/model_comparison.md`. The
+path is set once, as `API_MODEL_PATH` in `pipeline/config.py`. The scaler
+(`models/scaler.pkl`) is unchanged, and no model file was retrained or
+modified (SHA-256 of all `.keras` files and the scaler were the same before
+and after).
+
+Ground-truth check, done before updating any expected value: the first test
+window from `data/processed/windows.npz`, inverse-scaled to raw units and sent
+to `/predict`, returned **0.0570 mm**. The first `cnn_lstm_mm` value in
+`experiments/run_20261017_210439/predictions.csv` (2025-04-03 02:00) is
+**0.0570 mm**, so they're equal. The raw-CSV window that the tests use differs
+from the inverse-scaled one by at most 6.1e-5 (float32 rounding) and also
+returns 0.0570 mm.
+
+Check that the new assertions catch the old model: an app built with the LSTM
+reports `"model": "lstm"` from `/health` and predicts 0.0703 mm, so T17 and
+T2 would both fail.
+
+Run recorded: 2026-10-17, at commit `11f6abe`. Result: **17 passed in 3.56 s**
+(Python 3.13.14, pytest 9.1.1).
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| T1 | `GET /health` | 200, `status` "ok" | 200, `{"status": "ok", "model": "cnn_lstm", "model_file": "cnn_lstm_model.keras"}`. PASSED | Deliberate change: the response now names the loaded model, so the test checks `status` instead of the whole body. Old expected value: exactly `{"status": "ok"}`. |
+| T2 | `POST /predict` with a real 24-hour test window | 200, `predicted_mm` 0.0570 (±0.0001, the ground-truth value above), `risk_level` "low", thresholds PROVISIONAL | 200, `predicted_mm` 0.0570, `risk_level` "low", `thresholds` "PROVISIONAL". PASSED | Deliberate change of model. Old actual value: 0.0703 mm from the LSTM, when the test only checked `predicted_mm >= 0`. It now checks the exact verified value. |
+| T7 | `POST /predict`, then `GET /predictions` | 1 stored row with the same id, `predicted_mm` and `risk_level`, and 24 input hours | 1 row: id 1, `predicted_mm` 0.0570, `risk_level` "low", 24 input hours. PASSED | None. Test unchanged; the stored value changed from 0.0703 to 0.0570 with the model. |
+| T17 | `GET /health` reports the served model | `model` is "cnn_lstm", `model_file` is "cnn_lstm_model.keras" | `model` "cnn_lstm", `model_file` "cnn_lstm_model.keras". PASSED | New test. It fails if the API is switched back to another model by mistake. |
+
+T3–T6 and T8–T16 are unchanged and passed in the same run.
