@@ -38,6 +38,7 @@ def row(label, run, test, val):
     return {
         "model": label, "run": run,
         "val_rmse_mm": val["rmse_mm"], "val_mae_mm": val["mae_mm"],
+        "val_heavy_hit": val["n_heavy_hit"], "val_heavy_actual": val["n_heavy_actual"],
         "val_heavy_recall": val["heavy_recall"],
         "test_rmse_mm": test["rmse_mm"], "test_mae_mm": test["mae_mm"],
         "test_r2": test["r2"],
@@ -76,11 +77,12 @@ def results_markdown(table, chosen, arima_order):
     fmt = lambda v, d=4: "–" if v is None or pd.isna(v) else f"{v:.{d}f}"
     lines = [
         "### Validation (used for selection)", "",
-        "| Model | RMSE (mm) | MAE (mm) | ≥ 2.5 mm recall |",
-        "|---|---|---|---|",
+        "| Model | RMSE (mm) | MAE (mm) | ≥ 2.5 mm hit | Recall |",
+        "|---|---|---|---|---|",
     ]
     for r in table.itertuples():
         lines.append(f"| {r.model} | {fmt(r.val_rmse_mm)} | {fmt(r.val_mae_mm)} | "
+                     f"{r.val_heavy_hit}/{r.val_heavy_actual} | "
                      f"{fmt(r.val_heavy_recall, 3)} |")
     lines += [
         "", f"**Selected for the API (by the rule above): {chosen}**", "",
