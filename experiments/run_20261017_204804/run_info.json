@@ -1,0 +1,10 @@
+{
+  "model": "arima",
+  "timestamp": "2026-10-17T20:48:04",
+  "git_commit": "2f68830e9b325cf8c1d63dc21a5f2e814c86c6b4",
+  "git_dirty": false,
+  "dataset_rows": 43824,
+  "val_samples": 6550,
+  "test_samples": 6550,
+  "grid_fit_seconds": 61.0
+}

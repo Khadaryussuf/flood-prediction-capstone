@@ -1,0 +1,73 @@
+{
+  "window_hours": 24,
+  "split": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15
+  },
+  "seed": 42,
+  "features": [
+    "precipitation",
+    "temperature_2m",
+    "relative_humidity_2m",
+    "surface_pressure",
+    "wind_speed_10m"
+  ],
+  "target": "precipitation",
+  "heavy_rain_mm": 2.5,
+  "model": {
+    "type": "ARIMA",
+    "order": [
+      3,
+      0,
+      1
+    ],
+    "trend": "c",
+    "selection": "lowest AIC on the training split among converged fits",
+    "grid": {
+      "p": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "d": [
+        0
+      ],
+      "q": [
+        0,
+        1,
+        2
+      ]
+    },
+    "aic_by_order": {
+      "(0, 0, 0)": 12614.87,
+      "(0, 0, 1)": 267.75,
+      "(0, 0, 2)": -2328.86,
+      "(1, 0, 0)": -3795.6,
+      "(1, 0, 1)": -3819.38,
+      "(1, 0, 2)": -3963.58,
+      "(2, 0, 0)": -3814.09,
+      "(2, 0, 1)": -3861.31,
+      "(2, 0, 2)": -3982.2,
+      "(3, 0, 0)": -3955.17,
+      "(3, 0, 1)": -3983.58,
+      "(3, 0, 2)": -3981.52
+    },
+    "adf_train": {
+      "statistic": -15.65703471602809,
+      "p_value": 1.5707498048097006e-28,
+      "maxlag": 48
+    },
+    "fitted_params": {
+      "const": 0.05801213984714488,
+      "ar.L1": 1.08011039728736,
+      "ar.L2": -0.34690546814291645,
+      "ar.L3": 0.07899251831800622,
+      "ma.L1": -0.42039665869162834,
+      "sigma2": 0.0513968334012302
+    },
+    "forecasting": "fitted params applied to val/test with res.apply (no refit); one-step-ahead",
+    "input": "rainfall only (univariate), mm"
+  }
+}
