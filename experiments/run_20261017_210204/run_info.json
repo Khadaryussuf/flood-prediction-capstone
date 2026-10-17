@@ -1,0 +1,10 @@
+{
+  "model": "lstm",
+  "timestamp": "2026-10-17T21:02:04",
+  "git_commit": "09c406004a7bfa9f66fcbfae44455be2028384c1",
+  "git_dirty": false,
+  "dataset_rows": 43824,
+  "val_samples": 6550,
+  "test_samples": 6550,
+  "model_params": 17985
+}
