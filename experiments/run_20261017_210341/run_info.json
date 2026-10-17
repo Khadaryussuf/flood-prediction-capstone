@@ -1,0 +1,18 @@
+{
+  "model": "bilstm",
+  "timestamp": "2026-10-17T21:03:41",
+  "git_commit": "b5304493d076d4530f625e92cd0be82f2049d407",
+  "git_dirty": false,
+  "dataset_rows": 43824,
+  "val_samples": 6550,
+  "test_samples": 6550,
+  "model_params": 17689,
+  "training": {
+    "model": "bilstm",
+    "params": 17689,
+    "epochs_run": 16,
+    "best_epoch": 6,
+    "best_val_loss": 0.0005632574902847409,
+    "train_seconds": 68.5
+  }
+}
