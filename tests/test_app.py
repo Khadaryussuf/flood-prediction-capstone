@@ -26,8 +26,10 @@ def test_valid_prediction(client, real_window):
     response = client.post("/predict", json={"readings": real_window})
     assert response.status_code == 200
     body = response.get_json()
-    assert body["predicted_mm"] >= 0
-    assert body["risk_level"] in ("low", "moderate", "high")
+    # Ground truth: first cnn_lstm_mm value in
+    # experiments/run_20261017_210439/predictions.csv (2025-04-03 02:00)
+    assert body["predicted_mm"] == pytest.approx(0.0570, abs=1e-4)
+    assert body["risk_level"] == "low"
     assert body["thresholds"] == "PROVISIONAL"
 
 
