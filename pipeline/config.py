@@ -35,6 +35,14 @@ BATCH_SIZE = 64
 MAX_EPOCHS = 100
 EARLY_STOP_PATIENCE = 10
 
+# Comparison models, sized to roughly the LSTM's ~18k parameters.
+# They use the same dropout, batch size, epochs and early stopping.
+BILSTM_UNITS = 44  # per direction
+CNN_FILTERS = 32
+CNN_KERNEL = 3
+CNN_POOL = 2
+CNN_LSTM_UNITS = 52
+
 # Flood risk levels from predicted next-hour rainfall (mm).
 # PROVISIONAL: these are generic light/moderate/heavy hourly rain-intensity
 # classes, NOT calibrated against Nairobi flood records. Below 2.5 mm is
@@ -50,5 +58,6 @@ WINDOWS_NPZ = ROOT / "data" / "processed" / "windows.npz"
 SCALER_PATH = ROOT / "models" / "scaler.pkl"
 LSTM_MODEL_PATH = ROOT / "models" / "lstm_model.keras"
 TRAINING_LOG_PATH = ROOT / "models" / "training_log.csv"
+MODELS_DIR = ROOT / "models"  # other models: <name>_model.keras, <name>_training_log.csv
 EXPERIMENTS_DIR = ROOT / "experiments"
 SPLIT_SUMMARY_PATH = ROOT / "docs" / "split_summary.json"
