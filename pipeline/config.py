@@ -41,6 +41,8 @@ EARLY_STOP_PATIENCE = 10
 # "low", below 7.6 mm is "moderate", anything higher is "high".
 RISK_THRESHOLDS_MM = [(2.5, "low"), (7.6, "moderate")]
 HIGHEST_RISK = "high"
+# Evaluation reports how many hours at or above this were predicted as such
+HEAVY_RAIN_MM = RISK_THRESHOLDS_MM[0][0]
 
 # Paths
 RAW_CSV = ROOT / "data" / "nairobi_meteorological_raw.csv"
