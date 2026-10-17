@@ -103,5 +103,17 @@ CNN-LSTM run_20261017_210439/, ARIMA run_20261017_204804/.
 - Input history differs: ARIMA's Kalman filter carries state over the whole test split up to the forecast hour (no train/val data), while the networks see only the last 24 hours.
 - ARIMA has no seasonal term, so the diurnal rain cycle isn't modelled. A SARIMA with a 24 h season would be a stronger baseline.
 
+## Split [docs/split_summary.json]
+Previously listed as a gap. Now saved by `pipeline.preprocess` (commit 156030a).
+
+| Split | Start | End | Hours | Samples (windows) |
+|---|---|---|---|---|
+| Train | 2021-01-01 00:00 | 2024-07-02 03:00 | 30,676 | 30,652 |
+| Val | 2024-07-02 04:00 | 2025-04-02 01:00 | 6,574 | 6,550 |
+| Test | 2025-04-02 02:00 | 2025-12-31 23:00 | 6,574 | 6,550 |
+| Total | | | 43,824 | 43,752 |
+
+- Each split loses its first 24 hours as targets (they serve only as history), so 72 hours in total. Windows never cross split boundaries.
+
 ## Gaps (not in any saved file yet)
-- Train and validation sample counts and split date ranges are only printed by `pipeline.preprocess`, not saved. Save them if the report needs them.
+- Training wall-clock time for the original LSTM was not recorded. BiLSTM (68.5 s) and CNN-LSTM (65.7 s) have it in models/<name>_train_info.json; ARIMA's grid fit (61.0 s) is in its run_info.json. Getting the LSTM's would mean retraining it, which isn't planned.
