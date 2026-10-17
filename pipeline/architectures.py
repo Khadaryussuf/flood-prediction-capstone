@@ -66,7 +66,7 @@ MODELS = {
     },
     "cnn_lstm": {
         "build": build_cnn_lstm,
-        "path": config.MODELS_DIR / "cnn_lstm_model.keras",
+        "path": config.CNN_LSTM_MODEL_PATH,
         "log": config.MODELS_DIR / "cnn_lstm_training_log.csv",
         "params": {"type": "CNN-LSTM", "conv_filters": config.CNN_FILTERS,
                    "conv_kernel": config.CNN_KERNEL, "pool_size": config.CNN_POOL,

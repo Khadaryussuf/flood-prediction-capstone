@@ -1,9 +1,12 @@
-"""Flask API that serves next-hour rainfall predictions from the LSTM.
+"""Flask API that serves next-hour rainfall predictions.
+
+The default model is config.API_MODEL_PATH (the CNN-LSTM, chosen on
+validation RMSE; see docs/model_comparison.md).
 
 Run from the repo root:  python -m backend.app
 
 Endpoints:
-  GET  /health       - check the server is up
+  GET  /health       - check the server is up, and which model is loaded
   POST /predict      - predict next-hour rainfall from the last 24 hours
   GET  /predictions  - the 20 most recent stored predictions
 """
@@ -98,7 +101,7 @@ def risk_level(predicted_mm):
 def create_app(model_path=None, scaler_path=None, database_url=None):
     """Build the Flask app. Arguments default to the project's real files,
     so tests can pass their own paths and a temporary database."""
-    model_path = Path(model_path or config.LSTM_MODEL_PATH)
+    model_path = Path(model_path or config.API_MODEL_PATH)
     scaler_path = Path(scaler_path or config.SCALER_PATH)
     database_url = database_url or os.environ.get("DATABASE_URL", DEFAULT_DATABASE_URL)
 
@@ -112,6 +115,7 @@ def create_app(model_path=None, scaler_path=None, database_url=None):
 
     # Load the model and scaler once, at startup, not on every request
     model = keras.models.load_model(model_path)
+    model_name = model_path.stem.removesuffix("_model")  # cnn_lstm_model.keras -> cnn_lstm
     scaler = joblib.load(scaler_path)
     target_idx = config.FEATURES.index(config.TARGET)
 
@@ -124,7 +128,8 @@ def create_app(model_path=None, scaler_path=None, database_url=None):
 
     @app.get("/health")
     def health():
-        return jsonify({"status": "ok"})
+        return jsonify({"status": "ok", "model": model_name,
+                        "model_file": model_path.name})
 
     @app.post("/predict")
     def predict():

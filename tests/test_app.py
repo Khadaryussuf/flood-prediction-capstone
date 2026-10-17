@@ -11,7 +11,14 @@ from backend.app import create_app
 def test_health(client):
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.get_json() == {"status": "ok"}
+    assert response.get_json()["status"] == "ok"
+
+
+# T17: the API must serve the model chosen by the validation rule
+def test_health_reports_cnn_lstm(client):
+    body = client.get("/health").get_json()
+    assert body["model"] == "cnn_lstm"
+    assert body["model_file"] == "cnn_lstm_model.keras"
 
 
 # T2

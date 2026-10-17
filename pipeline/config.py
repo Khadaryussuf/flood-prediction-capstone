@@ -63,7 +63,11 @@ SCALER_PATH = ROOT / "models" / "scaler.pkl"
 LSTM_MODEL_PATH = ROOT / "models" / "lstm_model.keras"
 TRAINING_LOG_PATH = ROOT / "models" / "training_log.csv"
 MODELS_DIR = ROOT / "models"  # other models: <name>_model.keras, <name>_training_log.csv
+CNN_LSTM_MODEL_PATH = MODELS_DIR / "cnn_lstm_model.keras"
 ARIMA_MODEL_PATH = MODELS_DIR / "arima_model.pkl"
+# Model served by the Flask API: CNN-LSTM, chosen by lowest validation RMSE
+# (rule and results in docs/model_comparison.md)
+API_MODEL_PATH = CNN_LSTM_MODEL_PATH
 ARIMA_LOG_PATH = MODELS_DIR / "arima_training_log.csv"
 EXPERIMENTS_DIR = ROOT / "experiments"
 SPLIT_SUMMARY_PATH = ROOT / "docs" / "split_summary.json"
