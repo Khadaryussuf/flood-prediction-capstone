@@ -20,8 +20,8 @@ from pipeline import config
 from pipeline.preprocess import chronological_split, load_hourly
 
 # Packages whose versions are recorded in versions.txt
-PACKAGES = ["tensorflow", "keras", "scikit-learn", "pandas", "numpy",
-            "flask", "sqlalchemy", "pytest"]
+PACKAGES = ["tensorflow", "keras", "scikit-learn", "statsmodels", "pandas",
+            "numpy", "flask", "sqlalchemy", "pytest"]
 
 SPLITS = ["train", "val", "test"]
 TARGET_IDX = config.FEATURES.index(config.TARGET)

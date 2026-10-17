@@ -43,6 +43,10 @@ CNN_KERNEL = 3
 CNN_POOL = 2
 CNN_LSTM_UNITS = 52
 
+# ARIMA(p, 0, q) orders tried; the one with the lowest training AIC is used
+ARIMA_P_VALUES = [0, 1, 2, 3]
+ARIMA_Q_VALUES = [0, 1, 2]
+
 # Flood risk levels from predicted next-hour rainfall (mm).
 # PROVISIONAL: these are generic light/moderate/heavy hourly rain-intensity
 # classes, NOT calibrated against Nairobi flood records. Below 2.5 mm is
@@ -59,5 +63,7 @@ SCALER_PATH = ROOT / "models" / "scaler.pkl"
 LSTM_MODEL_PATH = ROOT / "models" / "lstm_model.keras"
 TRAINING_LOG_PATH = ROOT / "models" / "training_log.csv"
 MODELS_DIR = ROOT / "models"  # other models: <name>_model.keras, <name>_training_log.csv
+ARIMA_MODEL_PATH = MODELS_DIR / "arima_model.pkl"
+ARIMA_LOG_PATH = MODELS_DIR / "arima_training_log.csv"
 EXPERIMENTS_DIR = ROOT / "experiments"
 SPLIT_SUMMARY_PATH = ROOT / "docs" / "split_summary.json"
