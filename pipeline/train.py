@@ -1,6 +1,7 @@
 """Train a model on the preprocessed windows.
 
 python -m pipeline.train --model {lstm,bilstm,cnn_lstm}   (default: lstm)
+python -m pipeline.train --model cnn_lstm --seed 1          (robustness seeds)
 
 Refuses to overwrite an existing trained model unless --overwrite is given.
 """
@@ -16,7 +17,8 @@ import tensorflow as tf
 from tensorflow import keras
 
 from pipeline import config
-from pipeline.architectures import MODELS, train_info_path
+from pipeline.architectures import MODELS, seed_files, train_info_path
+from pipeline.evaluation import git_info
 
 
 def set_seeds(seed):
@@ -36,11 +38,23 @@ def main():
     parser.add_argument("--model", choices=MODELS, default="lstm")
     parser.add_argument("--overwrite", action="store_true",
                         help="replace an existing trained model")
+    parser.add_argument("--seed", type=int,
+                        help="extra seed for the robustness check; outputs go to "
+                             "models/seeds/<model>_seed<N>/ (not allowed: 42)")
     args = parser.parse_args()
-    spec = MODELS[args.model]
+    spec = dict(MODELS[args.model], info=train_info_path(args.model))
+    seed = config.SEED
+    if args.seed is not None:
+        try:
+            spec.update(seed_files(args.model, args.seed))
+        except ValueError as e:
+            sys.exit(str(e))
+        seed = args.seed
     check_can_write(spec["path"], args.overwrite)
 
-    set_seeds(config.SEED)
+    # Check git state first, before this run creates any new files
+    git = git_info()
+    set_seeds(seed)
     data = np.load(config.WINDOWS_NPZ)
     X_train, y_train = data["X_train"], data["y_train"]
     X_val, y_val = data["X_val"], data["y_val"]
@@ -72,11 +86,11 @@ def main():
 
     val_losses = history.history["val_loss"]
     best_epoch = int(np.argmin(val_losses)) + 1
-    info = {"model": args.model, "params": model.count_params(),
+    info = {"model": args.model, "seed": seed, "params": model.count_params(),
             "epochs_run": len(val_losses), "best_epoch": best_epoch,
             "best_val_loss": float(min(val_losses)),
-            "train_seconds": round(train_seconds, 1)}
-    train_info_path(args.model).write_text(json.dumps(info, indent=2) + "\n")
+            "train_seconds": round(train_seconds, 1), **git}
+    spec["info"].write_text(json.dumps(info, indent=2) + "\n")
     print(f"Best epoch: {best_epoch} of {len(val_losses)}, "
           f"val_loss={min(val_losses):.6f}, {train_seconds:.0f} s")
     print(f"Saved model to {spec['path']}")

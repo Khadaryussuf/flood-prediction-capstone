@@ -78,3 +78,17 @@ MODELS = {
 def train_info_path(name):
     """JSON with epochs, best val loss and wall time written by train.py."""
     return config.MODELS_DIR / f"{name}_train_info.json"
+
+
+# Extra seeds for the robustness check (git-ignored). The seed-42 models at
+# the paths above are the originals and are never retrained from here.
+SEEDS_DIR = config.MODELS_DIR / "seeds"
+
+
+def seed_files(name, seed):
+    """Model, training log, train info and run folder parent for one seed."""
+    if seed == config.SEED:
+        raise ValueError(f"seed {seed} is the original run; it is reused, not retrained")
+    folder = SEEDS_DIR / f"{name}_seed{seed}"
+    return {"dir": folder, "path": folder / "model.keras",
+            "log": folder / "training_log.csv", "info": folder / "train_info.json"}

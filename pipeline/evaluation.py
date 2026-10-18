@@ -118,11 +118,14 @@ def save_json(path, data):
     path.write_text(json.dumps(data, indent=2) + "\n")
 
 
-def score_and_save(name, preds, params, training_log, git, extra_info=None):
+def score_and_save(name, preds, params, training_log, git, extra_info=None,
+                   runs_dir=None, seed=config.SEED):
     """Score a model on val and test, print the metrics, and save the run.
 
     preds: {"val": y_pred_mm, "test": y_pred_mm}, one prediction per window.
     git: git_info() taken at the start, before the run created any files.
+    runs_dir, seed: where the run folder goes and the seed recorded in
+    params.json; only the robustness seeds (models/seeds/) change these.
     """
     data = load_windows()
     scaler = load_scaler()
@@ -141,7 +144,7 @@ def score_and_save(name, preds, params, training_log, git, extra_info=None):
 
     # Create a new folder for this run
     now = datetime.now()
-    run_dir = config.EXPERIMENTS_DIR / f"run_{now:%Y%m%d_%H%M%S}"
+    run_dir = (runs_dir or config.EXPERIMENTS_DIR) / f"run_{now:%Y%m%d_%H%M%S}"
     run_dir.mkdir(parents=True)
 
     save_json(run_dir / "metrics.json", metrics)
@@ -160,7 +163,7 @@ def score_and_save(name, preds, params, training_log, git, extra_info=None):
         "window_hours": config.WINDOW,
         "split": {"train": config.TRAIN_RATIO, "val": config.VAL_RATIO,
                   "test": config.TEST_RATIO},
-        "seed": config.SEED,
+        "seed": seed,
         "features": config.FEATURES,
         "target": config.TARGET,
         "heavy_rain_mm": config.HEAVY_RAIN_MM,

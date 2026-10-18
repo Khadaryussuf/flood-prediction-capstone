@@ -49,6 +49,9 @@ repo root with the venv active.
 - Run preprocessing: `python -m pipeline.preprocess`
 - Train model: `python -m pipeline.train`
 - Evaluate model: `python -m pipeline.evaluate` (writes `experiments/run_<timestamp>/`)
+- Seed robustness (seeds 1-4 into git-ignored `models/seeds/`, then the
+  summary in `docs/seed_robustness.*`): `python -m pipeline.run_seeds`,
+  then `python -m pipeline.seed_robustness`
 - Start Flask backend: `python -m backend.app` (http://127.0.0.1:5000)
 - Run tests: `python -m pytest -v` (record results in `docs/TESTING.md`)
 - Demo (server running): `python -m scripts.demo_request`
