@@ -206,7 +206,8 @@ def results_markdown(table, summary):
                      f"{r.val_heavy_hit} | {r.test_heavy_hit} | {epochs} | `{r.run}` |")
     lines += [
         "", "RMSE and MAE in mm of next-hour rainfall. The seed-42 LSTM was "
-        "trained before epochs were recorded.", "",
+        "has no train_info.json, so its best epoch is not listed (its per-epoch "
+        "log is `models/training_log.csv`).", "",
         "## Mean ± SD across 5 seeds", "",
         f"| Model | Val RMSE | Test RMSE | Test MAE | Test R² | "
         f"Val ≥ 2.5 mm hit (of {n_val}) | Test ≥ 2.5 mm hit (of {n_test}) |",
@@ -229,6 +230,13 @@ def results_markdown(table, summary):
                      "persistence are single values): "
                      + ", ".join(f"{m} {v:.4f}" for m, v in order) + ".")
         best = order[0][0]
+        (m1, v1), (m2, v2) = order[:2]
+        sd = max(summary[f"{col}_sd"].get(m, 0.0) for m in (m1, m2))
+        verdict = ("smaller than" if v2 - v1 < sd else "at least")
+        lines.append(f"- Gap between the two lowest ({m1}, {m2}): {v2 - v1:.4f} mm, "
+                     f"{verdict} the larger seed SD of the two ({sd:.4f} mm)"
+                     + (", so they cannot be told apart on this metric."
+                        if v2 - v1 < sd else "."))
         if best == "CNN-LSTM":
             lines.append(f"- CNN-LSTM has the lowest mean {label}.")
         else:
