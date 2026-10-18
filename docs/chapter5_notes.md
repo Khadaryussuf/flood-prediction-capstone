@@ -46,10 +46,14 @@ a saved file, and the file is named in brackets. Run folder:
 
 ## Peaks [derived from run/predictions.csv]
 - Largest actual hourly rainfall: 9.3 mm. Largest LSTM prediction: 3.2404 mm → the model underpredicts peaks.
-- Hours with actual ≥ 2.5 mm (moderate or higher under the provisional thresholds): 35. Hours where the LSTM predicted ≥ 2.5 mm: 4.
+- Hours with actual ≥ 2.5 mm (moderate or higher under the AMS rain intensity classes): 35. Hours where the LSTM predicted ≥ 2.5 mm: 4.
 
 ## Backend and tests
-- Risk thresholds (PROVISIONAL): low < 2.5 mm, moderate < 7.6 mm, high otherwise [pipeline/config.py]
+- Risk thresholds: low < 2.5 mm, moderate < 7.6 mm, high otherwise. Source: American Meteorological Society, Glossary of Meteorology, entry "rain" (light up to 2.5 mm/h, moderate 2.6–7.6 mm/h, heavy over 7.6 mm/h). API field `thresholds`: "AMS rain intensity classes (not calibrated to Nairobi flood records)" [pipeline/config.py; backend/app.py]
+- Limitations of the risk level (state plainly in the chapter):
+  - It is an hourly rainfall intensity class, not a flood probability.
+  - It is not calibrated against Nairobi flood records.
+  - Kenya Met's own heavy-rain bands are 24-hour totals (heavy 20–50 mm, very heavy over 50 mm, per news reports of its October 2025 advisory), so they are not directly comparable to these hourly values.
 - pytest: 7 passed in 1.29 s, all on the first run [docs/TESTING.md]
 - The API now serves the CNN-LSTM (chosen by the validation rule, see Model comparison below) [pipeline/config.py API_MODEL_PATH; `/health` reports `"model": "cnn_lstm"`, docs/TESTING.md T17]
 - API prediction for the first real test window: 0.0570 mm, "low". Verified equal to the first `cnn_lstm_mm` value (2025-04-03 02:00) in experiments/run_20261017_210439/predictions.csv [docs/TESTING.md, "API switched to the CNN-LSTM"; T2]

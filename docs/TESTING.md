@@ -13,7 +13,9 @@ real test split (2025-04-02 02:00 to 2025-04-03 01:00), in raw units.
 
 The table below is the 2026-10-12 run, when the app served
 `models/lstm_model.keras`. Since 2026-10-17 it serves the CNN-LSTM; see
-"API switched to the CNN-LSTM" at the end for the updated results.
+"API switched to the CNN-LSTM" at the end for the updated results. Since
+2026-10-18 the `thresholds` field cites its source instead of saying
+"PROVISIONAL"; see "Risk thresholds cited" at the end.
 
 Run recorded: 2026-10-12, at commit `c942a72`. Result: **7 passed in 1.29 s**
 (Python 3.13.14, pytest 9.1.1). The status codes and messages in the Actual
@@ -104,3 +106,23 @@ Run recorded: 2026-10-17, at commit `11f6abe`. Result: **17 passed in 3.56 s**
 | T17 | `GET /health` reports the served model | `model` is "cnn_lstm", `model_file` is "cnn_lstm_model.keras" | `model` "cnn_lstm", `model_file` "cnn_lstm_model.keras". PASSED | New test. It fails if the API is switched back to another model by mistake. |
 
 T3–T6 and T8–T16 are unchanged and passed in the same run.
+
+## Risk thresholds cited (deliberate change)
+
+On 2026-10-18 the "PROVISIONAL" label on the risk thresholds was replaced by
+a cited source: American Meteorological Society, Glossary of Meteorology,
+entry "rain" (light up to 2.5 mm/h, moderate up to 7.6 mm/h, heavy over
+7.6 mm/h). The numeric thresholds (2.5 and 7.6 mm) did not change, and no
+model file, scaler or metric was touched. The `/predict` response field
+`thresholds` is now "AMS rain intensity classes (not calibrated to Nairobi
+flood records)".
+
+Run recorded: 2026-10-18, on top of commit `14c8c46` with this change
+applied. Result: **17 passed in 5.84 s** (Python 3.13.14, pytest 9.1.1).
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| T2 | `POST /predict` with a real 24-hour test window | 200, `predicted_mm` 0.0570 (±0.0001), `risk_level` "low", `thresholds` "AMS rain intensity classes (not calibrated to Nairobi flood records)" | 200, `predicted_mm` 0.0570, `risk_level` "low", `thresholds` as expected. PASSED | Deliberate change of label. Old expected value: `thresholds` "PROVISIONAL". |
+| T7 | `POST /predict`, then `GET /predictions` | 1 stored row with the same id, `predicted_mm` and `risk_level`, and 24 input hours | 1 row: id 1, `predicted_mm` 0.0570, `risk_level` "low", 24 input hours. PASSED | None. Test unchanged: it doesn't check `thresholds`, which isn't stored in the database. |
+
+T1, T3–T6 and T8–T17 are unchanged and passed in the same run.
