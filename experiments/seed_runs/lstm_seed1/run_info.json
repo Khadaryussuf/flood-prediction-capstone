@@ -1,0 +1,21 @@
+{
+  "model": "lstm",
+  "timestamp": "2026-10-18T23:34:05",
+  "git_commit": "b76620ba7d9a765de9413bcbef91f9b5872daad2",
+  "git_dirty": false,
+  "dataset_rows": 43824,
+  "val_samples": 6550,
+  "test_samples": 6550,
+  "model_params": 17985,
+  "training": {
+    "model": "lstm",
+    "seed": 1,
+    "params": 17985,
+    "epochs_run": 20,
+    "best_epoch": 10,
+    "best_val_loss": 0.0006256113993003964,
+    "train_seconds": 162.0,
+    "git_commit": "b76620ba7d9a765de9413bcbef91f9b5872daad2",
+    "git_dirty": false
+  }
+}

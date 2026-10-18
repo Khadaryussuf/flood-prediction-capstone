@@ -1,0 +1,21 @@
+{
+  "model": "bilstm",
+  "timestamp": "2026-10-18T23:52:03",
+  "git_commit": "b76620ba7d9a765de9413bcbef91f9b5872daad2",
+  "git_dirty": false,
+  "dataset_rows": 43824,
+  "val_samples": 6550,
+  "test_samples": 6550,
+  "model_params": 17689,
+  "training": {
+    "model": "bilstm",
+    "seed": 4,
+    "params": 17689,
+    "epochs_run": 19,
+    "best_epoch": 9,
+    "best_val_loss": 0.0005407719872891903,
+    "train_seconds": 119.3,
+    "git_commit": "b76620ba7d9a765de9413bcbef91f9b5872daad2",
+    "git_dirty": false
+  }
+}

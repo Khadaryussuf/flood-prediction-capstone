@@ -1,0 +1,24 @@
+model,seed,val_rmse_mm,test_rmse_mm,test_mae_mm,test_r2,val_heavy_hit,val_heavy_actual,test_heavy_hit,test_heavy_actual,best_epoch,epochs_run,git_commit,git_dirty,run
+LSTM,42,0.2089,0.3223,0.1095,0.2997,0,14,3,35,,,09c4060,False,experiments/run_20261017_210204/
+LSTM,1,0.2076,0.3075,0.125,0.3624,1,14,7,35,10,20,b76620b,False,experiments/seed_runs/lstm_seed1/
+LSTM,2,0.2061,0.3185,0.1026,0.3161,0,14,6,35,3,13,b76620b,False,experiments/seed_runs/lstm_seed2/
+LSTM,3,0.1979,0.3035,0.1143,0.379,1,14,8,35,25,35,b76620b,False,experiments/seed_runs/lstm_seed3/
+LSTM,4,0.206,0.3182,0.1035,0.3172,0,14,5,35,3,13,b76620b,False,experiments/seed_runs/lstm_seed4/
+BiLSTM,42,0.1969,0.3028,0.0947,0.3817,0,14,6,35,6,16,b530449,False,experiments/run_20261017_210341/
+BiLSTM,1,0.1925,0.296,0.0827,0.4092,1,14,7,35,13,23,b76620b,False,experiments/seed_runs/bilstm_seed1/
+BiLSTM,2,0.1965,0.3047,0.0884,0.374,0,14,6,35,5,15,b76620b,False,experiments/seed_runs/bilstm_seed2/
+BiLSTM,3,0.1943,0.3007,0.0834,0.3903,1,14,7,35,6,16,b76620b,False,experiments/seed_runs/bilstm_seed3/
+BiLSTM,4,0.1921,0.2972,0.0764,0.4043,1,14,6,35,9,19,b76620b,False,experiments/seed_runs/bilstm_seed4/
+CNN-LSTM,42,0.1899,0.2999,0.0809,0.3936,1,14,7,35,16,26,40adecb,False,experiments/run_20261017_210439/
+CNN-LSTM,1,0.1888,0.3008,0.0731,0.3898,1,14,7,35,14,24,b76620b,False,experiments/seed_runs/cnn_lstm_seed1/
+CNN-LSTM,2,0.1916,0.2999,0.089,0.3936,1,14,6,35,19,29,b76620b,False,experiments/seed_runs/cnn_lstm_seed2/
+CNN-LSTM,3,0.1898,0.2988,0.0723,0.3979,1,14,7,35,12,22,b76620b,False,experiments/seed_runs/cnn_lstm_seed3/
+CNN-LSTM,4,0.1894,0.301,0.077,0.3889,1,14,6,35,12,22,b76620b,False,experiments/seed_runs/cnn_lstm_seed4/
+LSTM,mean,0.2053,0.314,0.111,0.3349,0.4,,5.8,,,,,,
+BiLSTM,mean,0.1944,0.3003,0.0851,0.3919,0.6,,6.4,,,,,,
+CNN-LSTM,mean,0.1899,0.3001,0.0785,0.3928,1.0,,6.6,,,,,,
+LSTM,sd,0.0043,0.008,0.0092,0.0339,0.5477,,1.9235,,,,,,
+BiLSTM,sd,0.0022,0.0037,0.0068,0.0148,0.5477,,0.5477,,,,,,
+CNN-LSTM,sd,0.001,0.0009,0.0068,0.0036,0.0,,0.5477,,,,,,
+ARIMA,,0.1946,0.3041,0.0739,0.3764,1,14,9,35,,,,,experiments/run_20261017_204804/
+Persistence,,0.2195,0.3404,0.0707,0.2188,2,14,12,35,,,,,(every run)
