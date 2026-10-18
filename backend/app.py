@@ -89,7 +89,7 @@ def validate_readings(body):
 
 
 def risk_level(predicted_mm):
-    """Map predicted rainfall to a risk level using the PROVISIONAL thresholds."""
+    """Map predicted rainfall to a risk level using the AMS rain intensity classes."""
     for limit, label in config.RISK_THRESHOLDS_MM:
         if predicted_mm < limit:
             return label
@@ -168,7 +168,7 @@ def create_app(model_path=None, scaler_path=None, database_url=None):
             "id": row_id,
             "predicted_mm": predicted_mm,
             "risk_level": level,
-            "thresholds": "PROVISIONAL",
+            "thresholds": "AMS rain intensity classes (not calibrated to Nairobi flood records)",
         })
 
     @app.get("/predictions")

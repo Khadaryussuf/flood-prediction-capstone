@@ -48,9 +48,12 @@ ARIMA_P_VALUES = [0, 1, 2, 3]
 ARIMA_Q_VALUES = [0, 1, 2]
 
 # Flood risk levels from predicted next-hour rainfall (mm).
-# PROVISIONAL: these are generic light/moderate/heavy hourly rain-intensity
-# classes, NOT calibrated against Nairobi flood records. Below 2.5 mm is
-# "low", below 7.6 mm is "moderate", anything higher is "high".
+# Source: American Meteorological Society, Glossary of Meteorology, entry
+# "rain": light = trace to 0.25 cm/h (2.5 mm/h), moderate = 0.26-0.76 cm/h
+# (up to 7.6 mm/h), heavy = over 0.76 cm/h. Below 2.5 mm is "low", below
+# 7.6 mm is "moderate", anything higher is "high" (so exactly 2.5 or 7.6 mm
+# falls in the class above the AMS one). These are rain-intensity classes,
+# NOT calibrated against Nairobi flood records.
 RISK_THRESHOLDS_MM = [(2.5, "low"), (7.6, "moderate")]
 HIGHEST_RISK = "high"
 # Evaluation reports how many hours at or above this were predicted as such
