@@ -6,11 +6,16 @@ validation RMSE; see docs/model_comparison.md).
 Run from the repo root:  python -m backend.app
 
 Endpoints:
-  GET  /health       - check the server is up, and which model is loaded
-  POST /predict      - predict next-hour rainfall from the last 24 hours
-  GET  /predictions  - the 20 most recent stored predictions
+  GET  /health               - check the server is up, and which model is loaded
+  POST /predict              - predict next-hour rainfall from the last 24 hours
+  GET  /predictions          - the 20 most recent stored predictions
+  GET  /dashboard            - the dashboard page (built from frontend/)
+  GET  /api/meta             - thresholds, disclaimer and replay period for the dashboard
+  GET  /api/replay/<index>   - one 24-hour window from the held-out test split
+  GET  /api/comparison       - model comparison and seed results, read from docs/
 """
 
+import csv
 import json
 import math
 import os
@@ -19,17 +24,32 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file
 from sqlalchemy import DateTime, Float, String, Text, create_engine, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 from tensorflow import keras
 
 from pipeline import config
 from pipeline.evaluate import to_mm
+from pipeline.preprocess import chronological_split, load_hourly
 
 # Used when the DATABASE_URL environment variable is not set.
 # The .db file is git-ignored.
 DEFAULT_DATABASE_URL = "sqlite:///" + (config.ROOT / "data" / "predictions.db").as_posix()
+
+# Shown on every dashboard view
+DISCLAIMER = ("Risk level is hourly rainfall intensity (AMS classes), not flood "
+              "probability, and is not calibrated to Nairobi flood records.")
+REPLAY_LABEL = "Replay of held-out test period (not live)"
+
+# The built dashboard (npm run build in frontend/ writes here)
+DASHBOARD_INDEX = Path(__file__).resolve().parent / "static" / "app" / "index.html"
+
+# Result files the comparison panel reads. Read only, never written here.
+COMPARISON_CSV = config.ROOT / "docs" / "model_comparison.csv"
+SEED_CSV = config.ROOT / "docs" / "seed_robustness.csv"
+BASELINES = {"ARIMA", "Persistence"}
+WETTEST_COUNT = 10  # how many of the wettest test hours the dashboard can jump to
 
 
 # ---- Database table ------------------------------------------------------
@@ -94,6 +114,69 @@ def risk_level(predicted_mm):
         if predicted_mm < limit:
             return label
     return config.HIGHEST_RISK
+
+
+def load_test_split():
+    """The held-out test split in raw units, interpolated the same way as
+    in preprocess.py (within the split only)."""
+    test = chronological_split(load_hourly())[2]
+    return test.interpolate(method="linear", limit_direction="both")
+
+
+def number_or_none(text):
+    """CSV cell to float, or None for an empty cell."""
+    return float(text) if text.strip() else None
+
+
+def read_comparison():
+    """Combine docs/model_comparison.csv and docs/seed_robustness.csv into
+    one entry per model, for the dashboard's comparison panel."""
+    with open(COMPARISON_CSV, newline="") as f:
+        comparison = list(csv.DictReader(f))
+    with open(SEED_CSV, newline="") as f:
+        seed_rows = list(csv.DictReader(f))
+
+    served = config.API_MODEL_PATH.stem.removesuffix("_model")  # cnn_lstm
+    models = []
+    for row in comparison:
+        name = row["model"]
+        mean = next((r for r in seed_rows if r["model"] == name and r["seed"] == "mean"), None)
+        sd = next((r for r in seed_rows if r["model"] == name and r["seed"] == "sd"), None)
+        seeds = None
+        if mean and sd:
+            n_seeds = sum(1 for r in seed_rows if r["model"] == name and r["seed"].isdigit())
+            seeds = {
+                "n_seeds": n_seeds,
+                "seed_list": [int(r["seed"]) for r in seed_rows
+                              if r["model"] == name and r["seed"].isdigit()],
+                "mean": {key: number_or_none(mean[key])
+                         for key in ("val_rmse_mm", "test_rmse_mm", "test_heavy_hit")},
+                "sd": {key: number_or_none(sd[key])
+                       for key in ("val_rmse_mm", "test_rmse_mm", "test_heavy_hit")},
+            }
+        models.append({
+            "model": name,
+            "run": row["run"],
+            "is_baseline": name in BASELINES,
+            "selected": name.lower().replace("-", "_") == served,
+            "val_rmse_mm": number_or_none(row["val_rmse_mm"]),
+            "val_mae_mm": number_or_none(row["val_mae_mm"]),
+            "val_heavy_hit": int(row["val_heavy_hit"]),
+            "val_heavy_actual": int(row["val_heavy_actual"]),
+            "test_rmse_mm": number_or_none(row["test_rmse_mm"]),
+            "test_mae_mm": number_or_none(row["test_mae_mm"]),
+            "test_r2": number_or_none(row["test_r2"]),
+            "test_heavy_hit": int(row["test_heavy_hit"]),
+            "test_heavy_actual": int(row["test_heavy_actual"]),
+            "test_heavy_recall": number_or_none(row["test_heavy_recall"]),
+            "seeds": seeds,  # None: single deterministic run
+        })
+    return {
+        "selection_rule": "lowest validation RMSE",
+        "heavy_rain_mm": config.HEAVY_RAIN_MM,
+        "sources": [f"docs/{COMPARISON_CSV.name}", f"docs/{SEED_CSV.name}"],
+        "models": models,
+    }
 
 
 # ---- App -----------------------------------------------------------------
@@ -177,6 +260,68 @@ def create_app(model_path=None, scaler_path=None, database_url=None):
             query = select(Prediction).order_by(Prediction.id.desc()).limit(20)
             rows = session.scalars(query).all()
             return jsonify([row.to_dict() for row in rows])
+
+    # ---- Dashboard -------------------------------------------------------
+
+    # The test split is loaded the first time the dashboard asks for it,
+    # so starting the API stays fast
+    replay_cache = {}
+
+    def replay_split():
+        if "test" not in replay_cache:
+            replay_cache["test"] = load_test_split()
+        return replay_cache["test"]
+
+    @app.get("/dashboard")
+    def dashboard():
+        if not DASHBOARD_INDEX.exists():
+            return ("Dashboard not built yet. Run: cd frontend; npm ci; npm run build",
+                    503, {"Content-Type": "text/plain; charset=utf-8"})
+        return send_file(DASHBOARD_INDEX)
+
+    @app.get("/api/meta")
+    def meta():
+        test = replay_split()
+        window_count = len(test) - config.WINDOW
+        # Target hour i is row i + WINDOW, the same pairing as make_windows
+        targets = test[config.TARGET].iloc[config.WINDOW:].reset_index(drop=True)
+        wettest = targets.sort_values(ascending=False, kind="stable").head(WETTEST_COUNT)
+        return jsonify({
+            "disclaimer": DISCLAIMER,
+            "data_label": REPLAY_LABEL,
+            "timezone": config.TIMEZONE,
+            "thresholds": [{"below_mm": limit, "label": label}
+                           for limit, label in config.RISK_THRESHOLDS_MM],
+            "highest_risk": config.HIGHEST_RISK,
+            "test_period": {"start": test.index[0].isoformat(),
+                            "end": test.index[-1].isoformat()},
+            "window_hours": config.WINDOW,
+            "window_count": window_count,
+            "wettest": [{"index": int(i), "actual_mm": float(mm)} for i, mm in wettest.items()],
+        })
+
+    @app.get("/api/replay/<int(signed=True):index>")
+    def replay(index):
+        test = replay_split()
+        window_count = len(test) - config.WINDOW
+        if not 0 <= index < window_count:
+            return jsonify({"error": f"index must be between 0 and {window_count - 1}"}), 400
+        window = test.iloc[index:index + config.WINDOW]
+        target_time = test.index[index + config.WINDOW]
+        return jsonify({
+            "index": index,
+            "window_count": window_count,
+            "window_start": window.index[0].isoformat(),
+            "window_end": window.index[-1].isoformat(),
+            "target_time": target_time.isoformat(),
+            "times": [t.isoformat() for t in window.index],
+            "readings": window[config.FEATURES].to_dict(orient="records"),
+            "actual_next_mm": float(test[config.TARGET].iloc[index + config.WINDOW]),
+        })
+
+    @app.get("/api/comparison")
+    def comparison():
+        return jsonify(read_comparison())
 
     return app
 
