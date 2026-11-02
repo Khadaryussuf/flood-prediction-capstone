@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "contrast": "node scripts/contrast.mjs"
+    "contrast": "node scripts/contrast.mjs",
+    "third-party": "node scripts/third-party.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "4.3.3",

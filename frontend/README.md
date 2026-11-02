@@ -1,32 +1,63 @@
-# React + TypeScript + Vite
+# Dashboard frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The source of the dashboard served by Flask at `/dashboard`. It is built with
+Vite, React, TypeScript, Tailwind CSS and shadcn/ui.
 
-Currently, two official plugins are available:
+You don't need Node to run the dashboard: the built page is committed in
+`backend/static/app/`. You need Node 24 or newer only to change it.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Commands
 
-## React Compiler
+Run these in this folder:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```
+npm ci               # install the exact locked versions
+npm run dev          # dev server; forwards API calls to Flask on port 5000
+npm run build        # type-check, then write the page to ../backend/static/app
+npm test             # Vitest
+npm run contrast     # check the colour pairs against WCAG contrast ratios
+npm run third-party  # regenerate ../THIRD_PARTY.md from the lockfile
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+After changing anything here, run `npm run build` and commit
+`backend/static/app/`, because that copy is what Flask serves. After changing
+dependencies, also run `npm run third-party`.
+
+## Screenshots
+
+`scripts/screenshots.mjs` is a development-only visual check. It takes the
+wettest test hour at 360, 768 and 1280 px in both themes, plus a Moderate hour
+at 1280 px in both themes, and fails on horizontal overflow. Images go to the
+git-ignored `screenshots/` folder.
+
+Each page load stores a prediction, so point Flask at a scratch database. From
+the repo root, in PowerShell:
+
+```
+$env:DATABASE_URL = "sqlite:///C:/path/to/scratch.db"
+python -m backend.app
+```
+
+Then, in this folder, the first time only:
+
+```
+npx playwright install chromium
+```
+
+And to take the screenshots:
+
+```
+node scripts/screenshots.mjs <label>
+```
+
+## Where things are
+
+- `src/App.tsx`: page state and layout
+- `src/components/dashboard/`: the panels
+- `src/components/ui/`: components copied from shadcn/ui
+- `src/lib/`: API calls, response types, formatting, computed findings, fixed wording
+- `src/test/`: test setup and real API responses used as fixtures
+
+Numbers on the page come from the Flask API, and the risk class and thresholds
+are never worked out here. The disclaimer is also kept in `src/lib/copy.ts`, so
+it still shows when the API can't be reached.

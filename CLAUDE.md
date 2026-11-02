@@ -6,7 +6,8 @@ Capstone project for ICS 4111.
 ## Stack
 - Python, TensorFlow/Keras, scikit-learn
 - Flask backend (serves predictions)
-- React dashboard (planned, not started)
+- React dashboard (Vite, Tailwind, shadcn/ui), built into `backend/static/app/`
+  and served by Flask at `/dashboard`
 
 ## Layout
 - `data/` — raw and processed datasets
@@ -14,6 +15,7 @@ Capstone project for ICS 4111.
 - `models/` — model definitions, trained models, and fitted scalers
 - `notebooks/` — exploration and experiments
 - `backend/` — Flask API; `tests/` — pytest; `scripts/` — demo client
+- `frontend/` — dashboard source; `backend/static/app/` — its committed build
 - `experiments/` — saved evaluation runs; `docs/` — testing and report notes
 
 ## Data
@@ -55,3 +57,16 @@ repo root with the venv active.
 - Start Flask backend: `python -m backend.app` (http://127.0.0.1:5000)
 - Run tests: `python -m pytest -v` (record results in `docs/TESTING.md`)
 - Demo (server running): `python -m scripts.demo_request`
+- Dashboard (server running): http://127.0.0.1:5000/dashboard
+
+Frontend commands run in `frontend/` and need Node 24 or newer. Running the
+dashboard needs neither.
+- Set up: `npm ci`
+- Build: `npm run build` (writes `backend/static/app/`; commit the result)
+- Dev server (Flask running): `npm run dev`
+- Tests: `npm test` (record results in `docs/TESTING.md`)
+- Contrast check: `npm run contrast`
+- Third-party list: `npm run third-party` (regenerates `THIRD_PARTY.md`; run
+  after changing dependencies)
+- Screenshots (Flask running on a scratch `DATABASE_URL`):
+  `node scripts/screenshots.mjs <label>`

@@ -1,9 +1,11 @@
 # Flood Prediction Capstone
 
 Real-time flood risk prediction for urban flash flooding in Nairobi
-(ICS 4111 capstone). An LSTM predicts next-hour rainfall from the previous
-24 hours of weather. A Flask API serves the prediction with a rainfall
-intensity risk level and stores every prediction in a database.
+(ICS 4111 capstone). A CNN-LSTM, chosen by lowest validation RMSE from an LSTM,
+BiLSTM, CNN-LSTM and ARIMA baseline, predicts next-hour rainfall from the
+previous 24 hours of weather. A Flask API serves the prediction with a rainfall
+intensity risk level and stores every prediction in a database. A dashboard
+replays the held-out test period through the served model.
 
 ## Setup
 
@@ -34,13 +36,53 @@ python -m backend.app            # serves on http://127.0.0.1:5000
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /health` | `{"status": "ok"}` |
+| `GET /health` | `status`, and the served `model` and `model_file` |
 | `POST /predict` | Body `{"readings": [...]}` with 24 hourly objects, each with `precipitation`, `temperature_2m`, `relative_humidity_2m`, `surface_pressure`, `wind_speed_10m`. Returns `predicted_mm`, `risk_level` and `"thresholds": "AMS rain intensity classes (not calibrated to Nairobi flood records)"`. |
 | `GET /predictions` | The 20 most recent stored predictions |
+| `GET /dashboard` | The dashboard page |
+| `GET /api/meta` | Thresholds, disclaimer, replay period and the wettest test hours |
+| `GET /api/replay/<index>` | One 24-hour window from the held-out test split, and the actual next hour |
+| `GET /api/comparison` | Model results, read from `docs/model_comparison.csv` and `docs/seed_robustness.csv` |
 
 Predictions are stored with SQLAlchemy. Set the `DATABASE_URL` environment
 variable to choose the database. By default it uses `data/predictions.db`
 (SQLite, git-ignored).
+
+## Dashboard
+
+With the backend running, open <http://127.0.0.1:5000/dashboard>. The built page
+is committed in `backend/static/app/`, so this needs no Node or npm, and nothing
+loads from a CDN.
+
+**The data is a replay of the held-out test period, not live.** Each step sends a
+real 24-hour window through `/predict`, so it runs the served model and stores a
+row. Reloading the page also stores a row.
+
+Risk level is hourly rainfall intensity (AMS classes), not flood probability, and
+is not calibrated to Nairobi flood records.
+
+`/predictions` doesn't record which model made a prediction, so the timeline can
+show rows from a previously served model. For a demo, start on a fresh database
+by setting `DATABASE_URL`:
+
+```
+$env:DATABASE_URL = "sqlite:///C:/path/to/demo.db"
+python -m backend.app
+```
+
+To change the dashboard, you need Node 24 or newer; see
+[frontend/README.md](frontend/README.md). In short:
+
+```
+cd frontend
+npm ci
+npm run build    # writes backend/static/app; commit the result
+npm run dev      # dev server, with Flask running
+npm test
+```
+
+Third-party components and libraries, with versions and licences, are listed in
+[THIRD_PARTY.md](THIRD_PARTY.md).
 
 ## Tests
 
@@ -48,7 +90,8 @@ variable to choose the database. By default it uses `data/predictions.db`
 python -m pytest -v
 ```
 
-Results are recorded in [docs/TESTING.md](docs/TESTING.md).
+Frontend tests run with `npm test` in `frontend/`. Results are recorded in
+[docs/TESTING.md](docs/TESTING.md).
 
 ## Demo
 
@@ -78,19 +121,24 @@ made by the author.
 
 ## Known limitations
 
-Numbers are from `experiments/run_20261012_132216/` (test set: 6,550 hours,
+Numbers are for the served CNN-LSTM, from `experiments/run_20261017_210439/`
+and [docs/model_comparison.md](docs/model_comparison.md) (test set: 6,550 hours,
 2025-04-03 to 2025-12-31).
 
-- **Modest accuracy.** LSTM R² is 0.2997 (RMSE 0.3223 mm). It beats the
+- **Modest accuracy.** CNN-LSTM R² is 0.3936 (RMSE 0.2999 mm). It beats the
   persistence baseline (R² 0.2188, RMSE 0.3404 mm), but most of the variance
   in hourly rainfall is still unexplained.
-- **MAE is worse than persistence.** LSTM MAE is 0.1095 mm versus 0.0707 mm.
-  On the 5,010 dry hours, the LSTM predicts small amounts of rain (MAE
-  0.0750 mm vs 0.0122 mm). On the 1,540 wet hours it does better than
-  persistence (MAE 0.2216 mm vs 0.2612 mm).
-- **Early overfitting.** Validation loss was lowest at epoch 2 of 12
-  (0.000636) and never improved after that, while training loss kept falling
-  (0.000991 to 0.000755). Early stopping restored the epoch-2 weights.
+- **MAE is worse than persistence.** CNN-LSTM MAE is 0.0809 mm versus 0.0707 mm.
+  On the 5,010 dry hours, it predicts small amounts of rain (MAE 0.0393 mm vs
+  0.0122 mm). On the 1,540 wet hours it does better than persistence (MAE
+  0.2162 mm vs 0.2612 mm).
+- **It misses most heavy rain.** It predicted at least 2.5 mm for 7 of the 35
+  test hours that reached 2.5 mm. ARIMA caught 9 and persistence 12. Its highest
+  prediction is 4.31 mm against a highest actual of 9.30 mm, so on the test
+  period it never predicts the high class.
+- **Close results between models.** CNN-LSTM and BiLSTM can't be told apart on
+  test RMSE: their seed means differ by 0.0002 mm, less than the larger seed SD
+  of 0.0037 mm. See [docs/seed_robustness.md](docs/seed_robustness.md).
 - **Risk level is a rain-intensity class, not a flood probability.** It uses
   the American Meteorological Society's hourly rain intensity classes
   (Glossary of Meteorology, entry "rain": light up to 2.5 mm/h, moderate up

@@ -5,6 +5,7 @@ are only read, to check the API returns exactly what is in them.
 """
 
 import csv
+import json
 import re
 from pathlib import Path
 
@@ -202,3 +203,35 @@ def test_built_dashboard_contains_disclaimer(client):
             response.close()
     assert backend_app.DISCLAIMER in bundle
     assert backend_app.REPLAY_LABEL in bundle
+
+
+# ---- THIRD_PARTY.md ------------------------------------------------------
+
+THIRD_PARTY = config.ROOT / "THIRD_PARTY.md"
+FRONTEND = config.ROOT / "frontend"
+
+
+# T38: every direct dependency is recorded with its installed version and a licence
+def test_third_party_lists_every_direct_dependency():
+    text = THIRD_PARTY.read_text(encoding="utf-8")
+    package = json.loads((FRONTEND / "package.json").read_text(encoding="utf-8"))
+    lock = json.loads((FRONTEND / "package-lock.json").read_text(encoding="utf-8"))
+    for name in {**package["dependencies"], **package["devDependencies"]}:
+        info = lock["packages"][f"node_modules/{name}"]
+        assert f"| `{name}` | {info['version']} | {info['license']} |" in text, name
+    assert "UNKNOWN" not in text
+
+
+# T39: every copied component is listed, and the production tree is complete
+def test_third_party_lists_components_and_production_tree():
+    text = THIRD_PARTY.read_text(encoding="utf-8")
+    components = sorted(p.name for p in (FRONTEND / "src" / "components" / "ui").glob("*.tsx"))
+    assert components
+    for component in components:
+        assert f"- `{component}`" in text, component
+
+    lock = json.loads((FRONTEND / "package-lock.json").read_text(encoding="utf-8"))
+    for path, info in lock["packages"].items():
+        if path and not info.get("dev") and not info.get("optional"):
+            name = path.rsplit("node_modules/", 1)[1]
+            assert f"| `{name}` | {info['version']} | {info['license']} |" in text, path

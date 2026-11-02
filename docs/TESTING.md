@@ -161,3 +161,93 @@ Checks done outside pytest:
 - All 12 seeded runs recorded `git_dirty: false` in both `train_info.json`
   and `run_info.json`, and each copied `params.json` records its own seed.
 - `models/seeds/` left `git status` clean throughout the runs.
+
+## Dashboard tests
+
+Added with the dashboard at `/dashboard`. The backend tests are in
+`tests/test_dashboard.py` and use the real model and data with a temporary
+database. The frontend tests run with `npm test` in `frontend/`, using real API
+responses saved in `frontend/src/test/fixtures/`.
+
+Run recorded: 2026-11-02, on top of commit `0c05148` with this documentation
+change applied. Results are listed under "Results of this run" below (Python
+3.13.14, pytest 9.1.1, Node 24.20.0, Vitest 5.0.5).
+
+### Backend (pytest)
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| T27 | `test_replay_first_window` | Window 0 is 2025-04-02 02:00 to 2025-04-03 01:00, equals the first 24 test hours, target 2025-04-03 02:00, actual 0.0 mm | As expected. PASSED | First run failed: the test compared key order, which `jsonify` sorts. It now compares the set of keys. The API was unchanged. |
+| T28 | `test_replay_through_predict_matches_evaluation` | Sending window 0 to `/predict` gives the first `cnn_lstm_mm` in the saved predictions (±0.0001) | 0.0570 mm. PASSED | None |
+| T29 | `test_replay_indices_line_up_with_evaluation` | 6,550 windows; for the 10 wettest hours, time and actual match the saved evaluation and the prediction matches within 0.001 mm | As expected. PASSED | Deliberate change: also checks each wettest hour's `target_time`, added for the wettest-hours menu. |
+| T30 | `test_replay_index_out_of_range` (-1, 6550, 100000) | 400 naming the valid range | 400, "between 0 and 6549". PASSED | None |
+| T31 | `test_comparison_matches_result_files` | `/api/comparison` equals both CSVs, including ARIMA and Persistence as baselines with no seeds; 5 seeds for neural models; only CNN-LSTM selected | As expected. PASSED | Deliberate change: also checks `test_max_pred_mm` and `test_max_actual_mm`, added for the limitations text. |
+| T32 | `test_meta_uses_config_thresholds_and_disclaimer` | Thresholds equal `config`; exact disclaimer and replay label | As expected. PASSED | None |
+| T33 | `test_dashboard_missing_build_returns_503` | 503 mentioning `npm run build` | As expected. PASSED | None |
+| T34 | `test_dashboard_serves_built_page` | 200 with the page's contents | As expected. PASSED | None |
+| T35 | `test_replay_step_is_stored_in_temporary_database` | The database is in the test's temp folder; reading meta, replay and comparison stores nothing; `/predict` stores one row with the same inputs | As expected. PASSED | None |
+| T36 | `test_built_dashboard_loads_only_local_files` | The committed page loads only `/static/app/` files, all 200; no script, style or font from another host | As expected. PASSED | None |
+| T37 | `test_built_dashboard_contains_disclaimer` | The built JavaScript contains the exact disclaimer and replay label | As expected. PASSED | None |
+| T38 | `test_third_party_lists_every_direct_dependency` | Every `package.json` entry is in `THIRD_PARTY.md` with its locked version and licence; no unknown licence | As expected. PASSED | None |
+| T39 | `test_third_party_lists_components_and_production_tree` | Every copied component and every non-optional production package is listed | 13 components, 153 packages. PASSED | None |
+
+T1-T26 are unchanged and passed in the same run.
+
+### Frontend (Vitest)
+
+| File | Tests | What they check |
+|------|-------|-----------------|
+| `src/App.test.tsx` | 3 | The disclaimer shows word for word with the API down; the hero shows the model from `/health` and the prediction; stepping posts the next window to `/predict` |
+| `src/components/dashboard/RiskBadge.test.tsx` | 5 | Each class shows as text; an unknown class shows as sent; gauge bands come from the API's thresholds |
+| `src/components/theme-provider.test.tsx` | 2 | The dark class and remembered choice; switching still works with storage blocked |
+| `src/components/dashboard/panels.test.tsx` | 9 | Window chart hours and tabs; timeline order, classes, caption, replay hour, empty and error states; comparison rows and computed findings; limitations sheet opens by keyboard with real numbers |
+
+### Results of this run
+
+| Check | Result |
+|-------|--------|
+| `python -m pytest -q` | **41 passed in 5.44 s** |
+| `npm test` | **19 passed** in 4 files |
+| `npm run contrast` | All pairs pass, both themes |
+| `npm run build` | Succeeded; output identical to the committed `backend/static/app/` |
+
+### Visual check
+
+Done on the build in commit `0c05148` with Playwright 1.64.1 and Chromium, by
+opening each image. Flask ran on a scratch database. The images are git-ignored
+(`frontend/screenshots/1c/`) and aren't evidence in the repository.
+
+| View | Shots | Result |
+|------|-------|--------|
+| Wettest hour, window 6472 (28 Dec 2025, 17:00), predicted 1.72 mm, actual 9.3 mm | 360, 768 and 1280 px, light and dark (6) | Low class. No horizontal overflow. Correct layout in both themes |
+| Moderate hour, window 952 (12 May 2025, 17:00), predicted 4.03 mm, actual 3.8 mm | 1280 px, light and dark (2) | Moderate class, confirmed by the script. No horizontal overflow |
+| Limitations sheet, opened by keyboard, and the Pressure tab | 360 px dark, 1280 px light (4) | Correct, no browser console errors |
+
+Not checked:
+- The High class in a real view. The served model's highest test prediction is
+  4.31 mm, so no replay hour reaches it. Vitest covers its badge text, and its
+  marker appears only as a legend icon.
+- Scrolling the limitations sheet to its end in a browser.
+
+Known and accepted: at 360 px the comparison table scrolls sideways within its
+card.
+
+### Issues found during development
+
+| Issue | How it was found | Corrective action |
+|-------|------------------|-------------------|
+| Light-theme amber on the gauge was 2.77:1 on white, below the 3:1 minimum for graphics | `npm run contrast` | Darkened to `#B97500` (3.75:1) |
+| Page was 413 px wide at a 360 px viewport | Screenshot script's overflow check | Browsers ignore `sr-only`'s 1 px width on a `<table>`. Moved the rule to a wrapping `<div>`. The script now fails on overflow |
+| SD whiskers crossed the chart's value labels | Reading the screenshots | Each label is placed past the end of its whisker |
+| "Wind" tab fell outside its bar at 360 px | Reading the screenshots | Overrode the component's fixed tab-bar height |
+| `shadcn add` brought back the removed `cn` package, and pinned Recharts at 3.8.0 | Checking `package.json` after adding components | Removed `cn`, pointed the imports at `@/lib/utils`, and pinned Recharts 3.10.1 |
+
+`npm audit` on this run: production dependencies (`--omit=dev`) 0 findings; all
+dependencies 2 low and 4 moderate, all through the development-only `shadcn`
+command (`deepmerge`, and `minimatch` through `ts-morph`). None is high or
+critical, and none was auto-fixed.
+
+SHA-256 of the 228 protected files (everything under `models/`, `experiments/`
+and `data/` except `*.db`, plus `docs/model_comparison.*`,
+`docs/seed_robustness.*` and `pipeline/config.py`) was the same before the
+dashboard work and after this run.
