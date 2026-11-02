@@ -42,7 +42,7 @@ describe('PredictionTimeline', () => {
     expect(rows[1]).toHaveTextContent('0.06 mm')
     expect(rows[1]).toHaveTextContent('Low')
     expect(rows[2]).toHaveTextContent('4.03 mm')
-    expect(rows[2]).toHaveTextContent('Moderate')
+    expect(rows[2]).toHaveTextContent('Medium')
   })
 
   it('says predictions may come from an earlier model and when times are from', () => {

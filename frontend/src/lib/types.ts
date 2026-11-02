@@ -1,5 +1,30 @@
 // Shapes of the JSON returned by the Flask API (backend/app.py)
 
+export type Role = 'responder' | 'admin'
+export type AccountStatus = 'pending' | 'active' | 'rejected' | 'disabled'
+
+/** An account, as the API shows it. It never includes the password. */
+export interface User {
+  id: number
+  name: string
+  email: string
+  organisation: string
+  role: Role
+  status: AccountStatus
+  created_at: string
+  last_login_at: string | null
+}
+
+/** One row of GET /api/admin/audit */
+export interface AuditEntry {
+  id: number
+  at: string
+  actor: string
+  action: string
+  target: string
+  detail: string
+}
+
 export type Feature =
   | 'precipitation'
   | 'temperature_2m'

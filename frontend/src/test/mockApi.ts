@@ -33,6 +33,7 @@ export function mockApi() {
       calls.push({ path: input, method, body })
 
       if (input === '/health') return json(health)
+      if (input === '/api/auth/session') return json({ user: null, csrf_token: 'test-token' })
       if (input === '/api/meta') return json(meta)
       if (input === '/api/comparison') return json(comparison)
       if (input === '/predictions') return json(predictions)

@@ -42,10 +42,13 @@ built CSS file. `shadcn` is a development dependency because only the build read
 | `@tailwindcss/vite` | 4.3.3 | MIT | https://www.npmjs.com/package/@tailwindcss/vite |
 | `class-variance-authority` | 0.7.1 | Apache-2.0 | https://www.npmjs.com/package/class-variance-authority |
 | `clsx` | 2.1.1 | MIT | https://www.npmjs.com/package/clsx |
+| `leaflet` | 1.9.4 | BSD-2-Clause | https://www.npmjs.com/package/leaflet |
 | `lucide-react` | 1.65.0 | ISC | https://www.npmjs.com/package/lucide-react |
 | `radix-ui` | 1.8.1 | MIT | https://www.npmjs.com/package/radix-ui |
 | `react` | 19.3.1 | MIT | https://www.npmjs.com/package/react |
 | `react-dom` | 19.3.1 | MIT | https://www.npmjs.com/package/react-dom |
+| `react-leaflet` | 5.0.0 | Hippocratic-2.1 | https://www.npmjs.com/package/react-leaflet |
+| `react-router-dom` | 7.18.5 | MIT | https://www.npmjs.com/package/react-router-dom |
 | `recharts` | 3.10.1 | MIT | https://www.npmjs.com/package/recharts |
 | `tailwind-merge` | 3.7.0 | MIT | https://www.npmjs.com/package/tailwind-merge |
 | `tailwindcss` | 4.3.3 | MIT | https://www.npmjs.com/package/tailwindcss |
@@ -61,6 +64,7 @@ cache, outside this repository, for the screenshot script; it isn't redistribute
 | `@testing-library/jest-dom` | 7.0.1 | MIT | https://www.npmjs.com/package/@testing-library/jest-dom |
 | `@testing-library/react` | 16.3.3 | MIT | https://www.npmjs.com/package/@testing-library/react |
 | `@testing-library/user-event` | 14.6.8 | MIT | https://www.npmjs.com/package/@testing-library/user-event |
+| `@types/leaflet` | 1.9.22 | MIT | https://www.npmjs.com/package/@types/leaflet |
 | `@types/node` | 24.19.2 | MIT | https://www.npmjs.com/package/@types/node |
 | `@types/react` | 19.3.0 | MIT | https://www.npmjs.com/package/@types/react |
 | `@types/react-dom` | 19.3.0 | MIT | https://www.npmjs.com/package/@types/react-dom |
@@ -76,7 +80,7 @@ cache, outside this repository, for the screenshot script; it isn't redistribute
 ## Full production dependency tree
 
 Every package in the lockfile that isn't development-only, including what the direct dependencies pull
-in (153 packages; 50 optional platform binaries left out).
+in (160 packages; 50 optional platform binaries left out).
 
 | Package | Version | Licence | Source |
 |---|---|---|---|
@@ -150,6 +154,7 @@ in (153 packages; 50 optional platform binaries left out).
 | `@radix-ui/react-use-size` | 1.1.5 | MIT | https://www.npmjs.com/package/@radix-ui/react-use-size |
 | `@radix-ui/react-visually-hidden` | 1.2.13 | MIT | https://www.npmjs.com/package/@radix-ui/react-visually-hidden |
 | `@radix-ui/rect` | 1.1.3 | MIT | https://www.npmjs.com/package/@radix-ui/rect |
+| `@react-leaflet/core` | 3.0.0 | Hippocratic-2.1 | https://www.npmjs.com/package/@react-leaflet/core |
 | `@reduxjs/toolkit` | 2.13.0 | MIT | https://www.npmjs.com/package/@reduxjs/toolkit |
 | `@rolldown/pluginutils` | 1.0.1 | MIT | https://www.npmjs.com/package/@rolldown/pluginutils |
 | `@standard-schema/spec` | 1.1.0 | MIT | https://www.npmjs.com/package/@standard-schema/spec |
@@ -173,6 +178,7 @@ in (153 packages; 50 optional platform binaries left out).
 | `aria-hidden` | 1.2.6 | MIT | https://www.npmjs.com/package/aria-hidden |
 | `class-variance-authority` | 0.7.1 | Apache-2.0 | https://www.npmjs.com/package/class-variance-authority |
 | `clsx` | 2.1.1 | MIT | https://www.npmjs.com/package/clsx |
+| `cookie` | 1.1.1 | MIT | https://www.npmjs.com/package/cookie |
 | `csstype` | 3.2.3 | MIT | https://www.npmjs.com/package/csstype |
 | `d3-array` | 3.2.4 | ISC | https://www.npmjs.com/package/d3-array |
 | `d3-color` | 3.1.0 | ISC | https://www.npmjs.com/package/d3-color |
@@ -197,6 +203,7 @@ in (153 packages; 50 optional platform binaries left out).
 | `immer` | 11.2.9 | MIT | https://www.npmjs.com/package/immer |
 | `internmap` | 2.0.3 | ISC | https://www.npmjs.com/package/internmap |
 | `jiti` | 2.7.0 | MIT | https://www.npmjs.com/package/jiti |
+| `leaflet` | 1.9.4 | BSD-2-Clause | https://www.npmjs.com/package/leaflet |
 | `lightningcss` | 1.32.0 | MPL-2.0 | https://www.npmjs.com/package/lightningcss |
 | `lightningcss` | 1.33.0 | MPL-2.0 | https://www.npmjs.com/package/lightningcss |
 | `lucide-react` | 1.65.0 | ISC | https://www.npmjs.com/package/lucide-react |
@@ -209,9 +216,12 @@ in (153 packages; 50 optional platform binaries left out).
 | `react` | 19.3.1 | MIT | https://www.npmjs.com/package/react |
 | `react-dom` | 19.3.1 | MIT | https://www.npmjs.com/package/react-dom |
 | `react-is` | 17.0.2 | MIT | https://www.npmjs.com/package/react-is |
+| `react-leaflet` | 5.0.0 | Hippocratic-2.1 | https://www.npmjs.com/package/react-leaflet |
 | `react-redux` | 9.3.1 | MIT | https://www.npmjs.com/package/react-redux |
 | `react-remove-scroll` | 2.7.2 | MIT | https://www.npmjs.com/package/react-remove-scroll |
 | `react-remove-scroll-bar` | 2.3.8 | MIT | https://www.npmjs.com/package/react-remove-scroll-bar |
+| `react-router` | 7.18.5 | MIT | https://www.npmjs.com/package/react-router |
+| `react-router-dom` | 7.18.5 | MIT | https://www.npmjs.com/package/react-router-dom |
 | `react-style-singleton` | 2.2.3 | MIT | https://www.npmjs.com/package/react-style-singleton |
 | `recharts` | 3.10.1 | MIT | https://www.npmjs.com/package/recharts |
 | `redux` | 5.0.1 | MIT | https://www.npmjs.com/package/redux |
@@ -219,6 +229,7 @@ in (153 packages; 50 optional platform binaries left out).
 | `reselect` | 5.2.0 | MIT | https://www.npmjs.com/package/reselect |
 | `rolldown` | 1.2.16 | MIT | https://www.npmjs.com/package/rolldown |
 | `scheduler` | 0.28.0 | MIT | https://www.npmjs.com/package/scheduler |
+| `set-cookie-parser` | 2.7.3 | MIT | https://www.npmjs.com/package/set-cookie-parser |
 | `source-map-js` | 1.2.2 | BSD-3-Clause | https://www.npmjs.com/package/source-map-js |
 | `tailwind-merge` | 3.7.0 | MIT | https://www.npmjs.com/package/tailwind-merge |
 | `tailwindcss` | 4.3.3 | MIT | https://www.npmjs.com/package/tailwindcss |

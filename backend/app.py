@@ -13,29 +13,32 @@ Endpoints:
   GET  /api/meta             - thresholds, disclaimer and replay period for the dashboard
   GET  /api/replay/<index>   - one 24-hour window from the held-out test split
   GET  /api/comparison       - model comparison and seed results, read from docs/
+
+Accounts and sessions are in backend/auth.py and backend/security.py. Everything
+needs a session except /health, login, sign-up and static files.
 """
 
 import csv
 import json
 import math
 import os
+import secrets
 from datetime import datetime, timezone
 from pathlib import Path
 
 import joblib
 import pandas as pd
-from flask import Flask, jsonify, request, send_file
-from sqlalchemy import DateTime, Float, String, Text, create_engine, select
-from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+from flask import Flask, jsonify, redirect, request, send_file
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 from tensorflow import keras
 
+from backend import auth, security
+from backend.db import DEFAULT_DATABASE_URL, Prediction, make_engine  # noqa: F401
+from backend.env import load_env
 from pipeline import config
 from pipeline.evaluate import to_mm
 from pipeline.preprocess import chronological_split, load_hourly
-
-# Used when the DATABASE_URL environment variable is not set.
-# The .db file is git-ignored.
-DEFAULT_DATABASE_URL = "sqlite:///" + (config.ROOT / "data" / "predictions.db").as_posix()
 
 # Shown on every dashboard view
 DISCLAIMER = ("Risk level is hourly rainfall intensity (AMS classes), not flood "
@@ -50,32 +53,6 @@ COMPARISON_CSV = config.ROOT / "docs" / "model_comparison.csv"
 SEED_CSV = config.ROOT / "docs" / "seed_robustness.csv"
 BASELINES = {"ARIMA", "Persistence"}
 WETTEST_COUNT = 10  # how many of the wettest test hours the dashboard can jump to
-
-
-# ---- Database table ------------------------------------------------------
-
-class Base(DeclarativeBase):
-    pass
-
-
-class Prediction(Base):
-    """One row per prediction made by /predict."""
-    __tablename__ = "predictions"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    input_json: Mapped[str] = mapped_column(Text)  # the 24 readings as JSON
-    predicted_mm: Mapped[float] = mapped_column(Float)
-    risk_level: Mapped[str] = mapped_column(String(20))
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "created_at": self.created_at.isoformat(),
-            "input": json.loads(self.input_json),
-            "predicted_mm": self.predicted_mm,
-            "risk_level": self.risk_level,
-        }
 
 
 # ---- Helpers -------------------------------------------------------------
@@ -183,12 +160,12 @@ def read_comparison():
 
 # ---- App -----------------------------------------------------------------
 
-def create_app(model_path=None, scaler_path=None, database_url=None):
+def create_app(model_path=None, scaler_path=None, database_url=None, testing=False):
     """Build the Flask app. Arguments default to the project's real files,
-    so tests can pass their own paths and a temporary database."""
+    so tests can pass their own paths and a temporary database. Only tests may
+    run without a SECRET_KEY; they get a random one."""
     model_path = Path(model_path or config.API_MODEL_PATH)
     scaler_path = Path(scaler_path or config.SCALER_PATH)
-    database_url = database_url or os.environ.get("DATABASE_URL", DEFAULT_DATABASE_URL)
 
     # Fail fast: without the model and scaler the API can't predict anything
     for path in (model_path, scaler_path):
@@ -198,18 +175,30 @@ def create_app(model_path=None, scaler_path=None, database_url=None):
                 "Run the pipeline (preprocess and train) first."
             )
 
+    load_env()
+    secret_key = os.environ.get("SECRET_KEY") or (secrets.token_hex(32) if testing else None)
+    if not secret_key:
+        raise RuntimeError(
+            "SECRET_KEY is not set. Copy .env.example to .env and set it; "
+            "the file explains how to generate one."
+        )
+
     # Load the model and scaler once, at startup, not on every request
     model = keras.models.load_model(model_path)
     model_name = model_path.stem.removesuffix("_model")  # cnn_lstm_model.keras -> cnn_lstm
     scaler = joblib.load(scaler_path)
     target_idx = config.FEATURES.index(config.TARGET)
 
-    # Connect to the database and create the table if it doesn't exist
-    engine = create_engine(database_url)
-    Base.metadata.create_all(engine)
+    # Connect to the database and create the tables if they don't exist
+    engine = make_engine(database_url)
 
     app = Flask(__name__)
     app.config["DB_ENGINE"] = engine  # lets tests read the database directly
+    app.testing = testing
+    security.configure_sessions(app, secret_key)
+    app.before_request(lambda: security.check_request(engine))
+    app.after_request(security.add_security_headers)
+    app.register_blueprint(auth.bp)
 
     @app.get("/health")
     def health():
@@ -274,8 +263,21 @@ def create_app(model_path=None, scaler_path=None, database_url=None):
             replay_cache["test"] = load_test_split()
         return replay_cache["test"]
 
+    @app.get("/")
+    def home():
+        return redirect("/dashboard")
+
+    # The browser pages all load the same built app, which shows the right
+    # screen for the address. Access rules are in security.check_request.
+    @app.get("/login")
+    @app.get("/signup")
     @app.get("/dashboard")
-    def dashboard():
+    @app.get("/trends")
+    @app.get("/alerts")
+    @app.get("/settings")
+    @app.get("/evidence")
+    @app.get("/demo")
+    def page():
         if not DASHBOARD_INDEX.exists():
             return ("Dashboard not built yet. Run: cd frontend; npm ci; npm run build",
                     503, {"Content-Type": "text/plain; charset=utf-8"})

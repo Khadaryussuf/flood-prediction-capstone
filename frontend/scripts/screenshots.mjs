@@ -1,59 +1,57 @@
-// Dev-only visual check of the running dashboard. Start Flask first
-// (python -m backend.app, ideally with DATABASE_URL on a scratch database,
-// because each page load stores a prediction), then:
-//   node scripts/screenshots.mjs <label>      e.g.  node scripts/screenshots.mjs 1c
-// Writes frontend/screenshots/<label>/ (git-ignored): the wettest hour at three
-// widths in both themes, plus a Moderate hour at 1280 px in both themes.
+// Dev-only visual check of the running app, at 360 and 1280 px in both themes.
+// Start Flask first, on a scratch DATABASE_URL (the Evidence and Demo pages store
+// predictions), then:
+//   node scripts/screenshots.mjs <label> /login /settings ...
+// Pages other than /login and /signup log in first, using the FW_EMAIL and
+// FW_PASSWORD environment variables. A path may end in ?query. Writes
+// frontend/screenshots/<label>/ (git-ignored). Fails on horizontal overflow and
+// on browser console errors.
 import { mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 
 const BASE = process.env.DASHBOARD_URL ?? 'http://127.0.0.1:5000'
-const label = process.argv[2] ?? 'latest'
+const [label = 'latest', ...paths] = process.argv.slice(2)
 const outDir = new URL(`../screenshots/${label}/`, import.meta.url)
 mkdirSync(outDir, { recursive: true })
-
-// The wettest hour of the test period, a demanding case for the page
-const meta = await (await fetch(`${BASE}/api/meta`)).json()
-const wettestWindow = meta.wettest[0].index + 1 // the page's ?window= is 1-based
-// 12 May 2025, 17:00: predicted 4.03 mm, actual 3.8 mm, both Moderate
-const MODERATE_WINDOW = 952
-
-const SHOTS = [
-  ...[360, 768, 1280].flatMap((width) =>
-    ['light', 'dark'].map((theme) => ({ width, theme, window: wettestWindow, name: `${width}-${theme}` })),
-  ),
-  ...['light', 'dark'].map((theme) => ({
-    width: 1280,
-    theme,
-    window: MODERATE_WINDOW,
-    name: `moderate-1280-${theme}`,
-    expectRisk: 'moderate',
-  })),
-]
+const PUBLIC = new Set(['/login', '/signup'])
 
 // channel 'chromium' is the full browser, still headless. It avoids needing
 // Playwright's separate headless-shell download.
 const browser = await chromium.launch({ channel: 'chromium' })
 try {
-  for (const { width, theme, window, name, expectRisk } of SHOTS) {
-    const page = await browser.newPage({ viewport: { width, height: 900 }, colorScheme: theme })
-    await page.goto(`${BASE}/dashboard?window=${window}`)
-    await page.getByTestId('predicted-mm').waitFor()
-    await page.getByTestId('comparison-table').waitFor()
-    await page.getByTestId('latest-prediction').waitFor()
-    await page.waitForTimeout(900) // let the gauge needle finish moving
+  for (const path of paths) {
+    for (const width of [360, 1280]) {
+      for (const theme of ['light', 'dark']) {
+        const context = await browser.newContext({ viewport: { width, height: 900 }, colorScheme: theme })
+        const page = await context.newPage()
+        const errors = []
+        page.on('pageerror', (error) => errors.push(error.message))
+        page.on('console', (message) => {
+          // Map tiles can be unreachable offline; that's not a page fault
+          if (message.type() === 'error' && !message.text().includes('tile.openstreetmap')) errors.push(message.text())
+        })
 
-    const risk = await page.getByTestId('hero-risk').locator('[data-risk]').getAttribute('data-risk')
-    if (expectRisk && risk !== expectRisk) {
-      throw new Error(`${name}: expected the ${expectRisk} class, the page shows ${risk}`)
+        if (!PUBLIC.has(path)) {
+          await page.goto(`${BASE}/login`)
+          await page.getByLabel('Email').fill(process.env.FW_EMAIL ?? '')
+          await page.getByLabel('Password').fill(process.env.FW_PASSWORD ?? '')
+          await page.getByRole('button', { name: 'Log in' }).click()
+          await page.waitForURL('**/dashboard')
+        }
+        await page.goto(`${BASE}${path}`)
+        await page.waitForLoadState('networkidle')
+        await page.waitForTimeout(1000)
+
+        const name = `${path.replace(/\W+/g, '-').replace(/^-|-$/g, '')}-${width}-${theme}`
+        const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
+        await page.screenshot({ path: fileURLToPath(new URL(`${name}.png`, outDir)), fullPage: true })
+        const overflow = scrollWidth > width
+        console.log(`${name}: horizontal overflow ${overflow ? `YES (${scrollWidth}px)` : 'none'}, console errors ${errors.length ? errors.join(' | ') : 'none'}`)
+        if (overflow || errors.length) process.exitCode = 1
+        await context.close()
+      }
     }
-
-    const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
-    await page.screenshot({ path: fileURLToPath(new URL(`${name}.png`, outDir)), fullPage: true })
-    console.log(`${name}: saved, class ${risk}, horizontal overflow ${scrollWidth > width ? `YES (${scrollWidth}px)` : 'none'}`)
-    if (scrollWidth > width) process.exitCode = 1
-    await page.close()
   }
 } finally {
   await browser.close()

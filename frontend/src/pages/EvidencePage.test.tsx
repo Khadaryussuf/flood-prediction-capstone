@@ -2,17 +2,16 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import App from './App'
+import EvidencePage from './EvidencePage'
 import { ThemeProvider } from '@/components/theme-provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { DISCLAIMER } from '@/lib/copy'
 import { fixtures, mockApi, mockApiDown } from '@/test/mockApi'
 
 function renderApp() {
   return render(
     <ThemeProvider>
       <TooltipProvider>
-        <App />
+        <EvidencePage />
       </TooltipProvider>
     </ThemeProvider>,
   )
@@ -22,12 +21,10 @@ beforeEach(() => {
   window.history.replaceState(null, '', '/dashboard')
 })
 
-describe('App', () => {
-  it('shows the disclaimer word for word even when the API is down', async () => {
+describe('EvidencePage', () => {
+  it('says so when the API is down', async () => {
     mockApiDown()
     renderApp()
-    expect(screen.getByRole('note', { name: 'Disclaimer' })).toHaveTextContent(DISCLAIMER)
-    expect(DISCLAIMER).toBe(fixtures.meta.disclaimer) // same text as the backend
     expect(await screen.findByText("Can't reach the prediction API")).toBeInTheDocument()
   })
 

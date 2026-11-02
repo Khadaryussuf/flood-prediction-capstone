@@ -20,7 +20,7 @@ export const RISK_STYLES: Record<string, RiskStyle> = {
     solid: 'var(--risk-low-solid)',
   },
   moderate: {
-    label: 'Moderate',
+    label: 'Medium',  // the API's value stays "moderate"
     Icon: CloudRain,
     badge: 'bg-risk-moderate-bg text-risk-moderate border-risk-moderate/30',
     solid: 'var(--risk-moderate-solid)',

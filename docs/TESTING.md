@@ -259,3 +259,59 @@ SHA-256 of the 228 protected files (everything under `models/`, `experiments/`
 and `data/` except `*.db`, plus `docs/model_comparison.*`,
 `docs/seed_robustness.*` and `pipeline/config.py`) was the same before the
 dashboard work and after this run.
+
+## Security and access control
+
+Added with FloodWatch's accounts, in `tests/test_security.py` (Module 1). Each test
+uses the real app and model, a temporary database and passwords generated at run
+time. The existing tests T2-T7 and T27-T37 now go through a real login and CSRF
+token; their assertions weren't changed.
+
+CSRF approach: a per-session token (synchronizer pattern), returned by
+`GET /api/auth/session` and required in the `X-CSRF-Token` header on every POST,
+PUT, PATCH and DELETE, including login and sign-up. The cookie is also SameSite=Lax.
+
+Sessions: a signed cookie carries a random id for a row in `auth_sessions`. Logout,
+expiry and disabling an account therefore take effect on the server, even for a
+copied cookie.
+
+Run recorded: 2026-11-02, Module 1. Results for all S tests: PASSED.
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| S1 | Sign-up creates a pending account | 201; status pending, role responder | As expected. PASSED | None |
+| S2 | Pending account can't log in | 403 "awaiting approval"; still no session (401) | As expected. PASSED | None |
+| S3 | Rejected account, right and wrong password | Right password: "awaiting approval". Wrong: generic error | As expected. PASSED | None |
+| S4 | Approve, then login works | 200, role responder, last login recorded; email case ignored | As expected. PASSED | None |
+| S5 | Wrong password and unknown email | Both 401 with the same generic message | As expected. PASSED | None |
+| S6 | Lockout after 5 failures | 5th failure 429; right password still refused at 9 minutes; works after 10 | As expected. PASSED | First run crashed when logging in after earlier failures (a user object expired when the lockout row was deleted). Fixed in `backend/auth.py`; the test wasn't changed |
+| S7 | Failures outside the 10-minute window | Don't add up to a lockout | As expected. PASSED | None |
+| S8 | No session, every API route (read from the app's route list) | 401 | As expected. PASSED | None |
+| S9 | No session, every page | 302 to /login | As expected. PASSED | None |
+| S10 | /health and session endpoint | Open | As expected. PASSED | None |
+| S11 | Responder, every admin route (read from the app's route list) | 403 | As expected. PASSED | None |
+| S12 | Responder opens the Settings page | Redirected to /dashboard; admin isn't | As expected. PASSED | None |
+| S13 | Admin disables, then enables | Open session ends at once (401); login says disabled; works again after enabling | As expected. PASSED | None |
+| S14 | "Remove" keeps the row | Row stays as disabled; DELETE not allowed (405) | As expected. PASSED | None |
+| S15 | role=admin, status or is_admin at sign-up | Ignored: pending responder, can't log in | As expected. PASSED | None |
+| S16 | Duplicate email, different case | 409 | As expected. PASSED | None |
+| S17 | Weak passwords | 9 characters, password equal to email, and mismatch all 400 | As expected. PASSED | None |
+| S18 | Logout | 401 afterwards, including a copied cookie replayed by another client | As expected. PASSED | None |
+| S19 | Expired session | 401 after 8 hours | As expected. PASSED | None |
+| S20 | Session length | Server record and cookie both 8 hours | As expected. PASSED | None |
+| S21 | No self-demotion or self-disable | 409; role unchanged | As expected. PASSED | None |
+| S22 | Last-admin protection | 409 "last active administrator" | As expected. PASSED. The count is stubbed: with the self-check and role checks, normal use can't reach this state, so it is a second line of defence | None |
+| S23 | CSRF attempt | Missing or wrong token 403 on /predict, logout and admin routes | As expected. PASSED | None |
+| S24 | CSRF on login and sign-up | 403 without a token; token changes at login | As expected. PASSED | None |
+| S25 | No password hash in responses | Hash, "password" and "scrypt" absent from user, session, audit and login responses | As expected. PASSED | None |
+| S26 | Cookie flags on localhost | HttpOnly, SameSite=Lax, dated, not Secure | As expected. PASSED | None |
+| S27 | Cookie flags elsewhere | Secure | As expected. PASSED | None |
+| S28 | No SECRET_KEY | Refuses to start outside tests | As expected. PASSED | None |
+| S29 | Audit log | Who, what, target and when for each admin action | As expected. PASSED | None |
+| S30 | /predict and /predictions | 401 without a session | As expected. PASSED | None |
+| S31 | Repo scan | No credential-like name with a literal value in any tracked source file | As expected. PASSED | None |
+| S32 | .env | Git-ignored and untracked | As expected. PASSED | None |
+
+Frontend (Vitest, `src/pages/access.test.tsx`): 9 tests for the redirect to login,
+server messages, CSRF header, sign-up with no role field, mismatched passwords,
+Settings hidden from responders, approve flow, and self-removal not offered.
