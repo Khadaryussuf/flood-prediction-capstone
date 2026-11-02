@@ -1,0 +1,157 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Dark mode is a "dark" class on <html>, set by ThemeProvider */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    /* System fonts in Phase 1: nothing is downloaded */
+    --font-sans: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-heading: var(--font-sans);
+    --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Consolas, monospace;
+
+    /* Risk classes: text colour, tinted background, and a solid colour for the gauge */
+    --color-risk-low: var(--risk-low);
+    --color-risk-low-bg: var(--risk-low-bg);
+    --color-risk-low-solid: var(--risk-low-solid);
+    --color-risk-moderate: var(--risk-moderate);
+    --color-risk-moderate-bg: var(--risk-moderate-bg);
+    --color-risk-moderate-solid: var(--risk-moderate-solid);
+    --color-risk-high: var(--risk-high);
+    --color-risk-high-bg: var(--risk-high-bg);
+    --color-risk-high-solid: var(--risk-high-solid);
+
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* "Instrument panel" palette: cool slate neutrals, one teal accent.
+   Text pairs are checked for WCAG AA (4.5:1) by scripts/contrast.mjs. */
+:root {
+    --background: #F7F9FB;
+    --foreground: #0F1B2A;
+    --card: #FFFFFF;
+    --card-foreground: #0F1B2A;
+    --popover: #FFFFFF;
+    --popover-foreground: #0F1B2A;
+    --primary: #0E7490;
+    --primary-foreground: #FFFFFF;
+    --secondary: #EEF2F6;
+    --secondary-foreground: #0F1B2A;
+    --muted: #EEF2F6;
+    --muted-foreground: #4A5868;
+    --accent: #E6F3F6;
+    --accent-foreground: #0B4F61;
+    --destructive: #B42318;
+    --border: #DCE3EA;
+    --input: #CBD5E1;
+    --ring: #0E7490;
+
+    --risk-low: #0F6B4F;
+    --risk-low-bg: #E3F5EE;
+    --risk-low-solid: #159A75;
+    --risk-moderate: #8A4B00;
+    --risk-moderate-bg: #FDF1DC;
+    --risk-moderate-solid: #B97500;
+    --risk-high: #B42318;
+    --risk-high-bg: #FDE7E4;
+    --risk-high-solid: #D2402F;
+
+    --chart-1: #0E7490;
+    --chart-2: #64748B;
+    --chart-3: #159A75;
+    --chart-4: #B97500;
+    --chart-5: #D2402F;
+    --radius: 0.625rem;
+}
+
+.dark {
+    --background: #0B1220;
+    --foreground: #E6EDF5;
+    --card: #111A2C;
+    --card-foreground: #E6EDF5;
+    --popover: #111A2C;
+    --popover-foreground: #E6EDF5;
+    --primary: #22D3EE;
+    --primary-foreground: #0B1220;
+    --secondary: #1A2538;
+    --secondary-foreground: #E6EDF5;
+    --muted: #1A2538;
+    --muted-foreground: #9AA8BA;
+    --accent: #12303A;
+    --accent-foreground: #A5F3FC;
+    --destructive: #F97066;
+    --border: #22304A;
+    --input: #2A3954;
+    --ring: #22D3EE;
+
+    --risk-low: #6EE7B7;
+    --risk-low-bg: #0F2E27;
+    --risk-low-solid: #34D399;
+    --risk-moderate: #FCD34D;
+    --risk-moderate-bg: #33270B;
+    --risk-moderate-solid: #FBBF24;
+    --risk-high: #FCA5A5;
+    --risk-high-bg: #3A1517;
+    --risk-high-solid: #F87171;
+
+    --chart-1: #22D3EE;
+    --chart-2: #94A3B8;
+    --chart-3: #34D399;
+    --chart-4: #FBBF24;
+    --chart-5: #F87171;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Animation is used sparingly, and not at all if the user asks for less motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -5,3 +5,6 @@ data/processed/
 *.db
 .pytest_cache/
 models/seeds/
+.claude/settings.local.json
+frontend/node_modules/
+frontend/screenshots/

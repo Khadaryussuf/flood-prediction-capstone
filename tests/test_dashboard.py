@@ -5,6 +5,7 @@ are only read, to check the API returns exactly what is in them.
 """
 
 import csv
+import re
 from pathlib import Path
 
 import pytest
@@ -63,6 +64,7 @@ def test_replay_indices_line_up_with_evaluation(client, evaluation_rows):
         body = client.get(f"/api/replay/{i}").get_json()
         row = evaluation_rows[i]
         assert body["target_time"].replace("T", " ") == row["time"]
+        assert entry["target_time"] == body["target_time"]
         assert body["actual_next_mm"] == pytest.approx(float(row["actual_mm"]), abs=1e-4)
         predicted = client.post("/predict", json={"readings": body["readings"]}).get_json()
         assert predicted["predicted_mm"] == pytest.approx(float(row["cnn_lstm_mm"]), abs=1e-3)
@@ -157,3 +159,46 @@ def test_replay_step_is_stored_in_temporary_database(app, client, tmp_path):
     assert [row["id"] for row in saved] == [predicted["id"]]
     for stored, sent in zip(saved[0]["input"], readings):
         assert stored == pytest.approx(sent)
+
+
+# ---- The built dashboard (backend/static/app, from npm run build) --------
+
+BUILT_ASSETS = re.compile(r'(?:src|href)="(/static/app/[^"]+)"')
+
+
+def built_page_assets(client):
+    page = client.get("/dashboard").get_data(as_text=True)
+    return page, BUILT_ASSETS.findall(page)
+
+
+# T36: the committed build is served, and everything it loads comes from Flask
+def test_built_dashboard_loads_only_local_files(client):
+    assert backend_app.DASHBOARD_INDEX.exists(), "run npm run build in frontend/"
+    page, assets = built_page_assets(client)
+    assert '<div id="root">' in page
+    assert any(a.endswith(".js") for a in assets) and any(a.endswith(".css") for a in assets)
+
+    # No script, stylesheet, font or image from another host (no CDN)
+    assert not re.search(r'(?:src|href)="(?:https?:)?//', page)
+    for asset in assets:
+        response = client.get(asset)
+        assert response.status_code == 200, asset
+        text = response.get_data(as_text=True)
+        response.close()
+        if asset.endswith(".css"):
+            assert not re.search(r'(?:url\(|@import)\s*["\']?(?:https?:)?//', text), asset
+        if asset.endswith(".js"):
+            assert not re.search(r'(?:import\(|from)\s*["\'](?:https?:)?//', text), asset
+
+
+# T37: the built page carries the exact disclaimer and replay label
+def test_built_dashboard_contains_disclaimer(client):
+    _, assets = built_page_assets(client)
+    bundle = ""
+    for asset in assets:
+        if asset.endswith(".js"):
+            response = client.get(asset)
+            bundle += response.get_data(as_text=True)
+            response.close()
+    assert backend_app.DISCLAIMER in bundle
+    assert backend_app.REPLAY_LABEL in bundle

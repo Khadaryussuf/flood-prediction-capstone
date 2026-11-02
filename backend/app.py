@@ -297,7 +297,9 @@ def create_app(model_path=None, scaler_path=None, database_url=None):
                             "end": test.index[-1].isoformat()},
             "window_hours": config.WINDOW,
             "window_count": window_count,
-            "wettest": [{"index": int(i), "actual_mm": float(mm)} for i, mm in wettest.items()],
+            "wettest": [{"index": int(i), "actual_mm": float(mm),
+                         "target_time": test.index[i + config.WINDOW].isoformat()}
+                        for i, mm in wettest.items()],
         })
 
     @app.get("/api/replay/<int(signed=True):index>")

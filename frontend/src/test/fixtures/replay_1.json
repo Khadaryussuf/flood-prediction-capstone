@@ -1,0 +1,204 @@
+{
+  "actual_next_mm": 0.0,
+  "index": 1,
+  "readings": [
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 89,
+      "surface_pressure": 835.5,
+      "temperature_2m": 16.8,
+      "wind_speed_10m": 6.6
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 91,
+      "surface_pressure": 835.1,
+      "temperature_2m": 16.2,
+      "wind_speed_10m": 5.7
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 92,
+      "surface_pressure": 835.3,
+      "temperature_2m": 15.7,
+      "wind_speed_10m": 4.8
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 91,
+      "surface_pressure": 836.2,
+      "temperature_2m": 15.8,
+      "wind_speed_10m": 4.0
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 90,
+      "surface_pressure": 837.0,
+      "temperature_2m": 16.2,
+      "wind_speed_10m": 4.6
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 85,
+      "surface_pressure": 838.1,
+      "temperature_2m": 17.3,
+      "wind_speed_10m": 5.2
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 75,
+      "surface_pressure": 839.6,
+      "temperature_2m": 19.7,
+      "wind_speed_10m": 7.2
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 57,
+      "surface_pressure": 840.6,
+      "temperature_2m": 22.7,
+      "wind_speed_10m": 8.0
+    },
+    {
+      "precipitation": 0.1,
+      "relative_humidity_2m": 47,
+      "surface_pressure": 840.9,
+      "temperature_2m": 24.6,
+      "wind_speed_10m": 8.4
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 43,
+      "surface_pressure": 840.2,
+      "temperature_2m": 25.8,
+      "wind_speed_10m": 9.4
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 38,
+      "surface_pressure": 840.6,
+      "temperature_2m": 27.5,
+      "wind_speed_10m": 10.6
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 36,
+      "surface_pressure": 839.2,
+      "temperature_2m": 27.7,
+      "wind_speed_10m": 10.8
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 36,
+      "surface_pressure": 838.8,
+      "temperature_2m": 27.7,
+      "wind_speed_10m": 11.4
+    },
+    {
+      "precipitation": 0.1,
+      "relative_humidity_2m": 37,
+      "surface_pressure": 837.9,
+      "temperature_2m": 26.9,
+      "wind_speed_10m": 13.1
+    },
+    {
+      "precipitation": 0.2,
+      "relative_humidity_2m": 42,
+      "surface_pressure": 837.7,
+      "temperature_2m": 25.6,
+      "wind_speed_10m": 14.3
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 48,
+      "surface_pressure": 837.8,
+      "temperature_2m": 24.2,
+      "wind_speed_10m": 13.5
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 54,
+      "surface_pressure": 837.8,
+      "temperature_2m": 23.0,
+      "wind_speed_10m": 11.6
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 61,
+      "surface_pressure": 837.5,
+      "temperature_2m": 21.4,
+      "wind_speed_10m": 9.7
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 67,
+      "surface_pressure": 838.0,
+      "temperature_2m": 20.5,
+      "wind_speed_10m": 7.6
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 72,
+      "surface_pressure": 838.4,
+      "temperature_2m": 20.0,
+      "wind_speed_10m": 7.3
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 77,
+      "surface_pressure": 839.0,
+      "temperature_2m": 19.2,
+      "wind_speed_10m": 7.0
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 83,
+      "surface_pressure": 838.6,
+      "temperature_2m": 18.8,
+      "wind_speed_10m": 6.4
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 85,
+      "surface_pressure": 838.1,
+      "temperature_2m": 18.6,
+      "wind_speed_10m": 7.5
+    },
+    {
+      "precipitation": 0.0,
+      "relative_humidity_2m": 88,
+      "surface_pressure": 837.5,
+      "temperature_2m": 17.8,
+      "wind_speed_10m": 6.8
+    }
+  ],
+  "target_time": "2025-04-03T03:00:00",
+  "times": [
+    "2025-04-02T03:00:00",
+    "2025-04-02T04:00:00",
+    "2025-04-02T05:00:00",
+    "2025-04-02T06:00:00",
+    "2025-04-02T07:00:00",
+    "2025-04-02T08:00:00",
+    "2025-04-02T09:00:00",
+    "2025-04-02T10:00:00",
+    "2025-04-02T11:00:00",
+    "2025-04-02T12:00:00",
+    "2025-04-02T13:00:00",
+    "2025-04-02T14:00:00",
+    "2025-04-02T15:00:00",
+    "2025-04-02T16:00:00",
+    "2025-04-02T17:00:00",
+    "2025-04-02T18:00:00",
+    "2025-04-02T19:00:00",
+    "2025-04-02T20:00:00",
+    "2025-04-02T21:00:00",
+    "2025-04-02T22:00:00",
+    "2025-04-02T23:00:00",
+    "2025-04-03T00:00:00",
+    "2025-04-03T01:00:00",
+    "2025-04-03T02:00:00"
+  ],
+  "window_count": 6550,
+  "window_end": "2025-04-03T02:00:00",
+  "window_start": "2025-04-02T03:00:00"
+}

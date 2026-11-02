@@ -1,0 +1,6 @@
+{
+  "id": 2,
+  "predicted_mm": 0.0576,
+  "risk_level": "low",
+  "thresholds": "AMS rain intensity classes (not calibrated to Nairobi flood records)"
+}

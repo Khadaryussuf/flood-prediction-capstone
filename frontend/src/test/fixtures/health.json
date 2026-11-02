@@ -1,0 +1,5 @@
+{
+  "model": "cnn_lstm",
+  "model_file": "cnn_lstm_model.keras",
+  "status": "ok"
+}
