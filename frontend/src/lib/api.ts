@@ -1,7 +1,7 @@
 // All calls go to the same server that serves the page (Flask), so the
 // paths are relative to the site root. In `npm run dev`, Vite forwards
 // them to Flask (see vite.config.ts).
-import type { Health, Meta, Prediction, Reading, ReplayWindow } from './types'
+import type { Comparison, Health, Meta, Prediction, Reading, ReplayWindow, StoredPrediction } from './types'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, init)
@@ -18,6 +18,11 @@ export const getHealth = () => request<Health>('/health')
 export const getMeta = () => request<Meta>('/api/meta')
 
 export const getReplay = (index: number) => request<ReplayWindow>(`/api/replay/${index}`)
+
+export const getComparison = () => request<Comparison>('/api/comparison')
+
+/** The 20 most recent stored predictions, newest first */
+export const getPredictions = () => request<StoredPrediction[]>('/predictions')
 
 /** Runs the served model on one window. The backend stores each call,
  *  so every replay step also appears in /predictions. */

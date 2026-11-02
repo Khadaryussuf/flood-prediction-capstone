@@ -87,7 +87,7 @@ def test_comparison_matches_result_files(client):
     assert [m["model"] for m in body["models"]] == [r["model"] for r in comparison]
     for model, row in zip(body["models"], comparison):
         for key in ("val_rmse_mm", "val_mae_mm", "test_rmse_mm", "test_mae_mm",
-                    "test_r2", "test_heavy_recall"):
+                    "test_r2", "test_heavy_recall", "test_max_pred_mm", "test_max_actual_mm"):
             assert model[key] == float(row[key])
         for key in ("val_heavy_hit", "val_heavy_actual", "test_heavy_hit", "test_heavy_actual"):
             assert model[key] == int(row[key])

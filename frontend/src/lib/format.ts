@@ -22,6 +22,18 @@ export function formatDay(iso: string): string {
   return `${day} ${MONTHS[month - 1]} ${year}`
 }
 
+/** "02:00" */
+export function formatClock(iso: string): string {
+  return parts(iso).hhmm
+}
+
+/** When a request was stored. The backend records UTC: "3 Apr 2025, 02:00:15 UTC" */
+export function formatRequestTime(iso: string): string {
+  const { year, month, day } = parts(iso)
+  const time = (iso.split('T')[1] ?? '').slice(0, 8)
+  return `${day} ${MONTHS[month - 1]} ${year}, ${time} UTC`
+}
+
 /** Rainfall in mm with a fixed number of decimals, e.g. "0.06" */
 export function formatMm(mm: number, decimals = 2): string {
   return mm.toFixed(decimals)

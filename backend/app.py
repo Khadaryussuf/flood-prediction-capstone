@@ -169,6 +169,8 @@ def read_comparison():
             "test_heavy_hit": int(row["test_heavy_hit"]),
             "test_heavy_actual": int(row["test_heavy_actual"]),
             "test_heavy_recall": number_or_none(row["test_heavy_recall"]),
+            "test_max_pred_mm": number_or_none(row["test_max_pred_mm"]),
+            "test_max_actual_mm": number_or_none(row["test_max_actual_mm"]),
             "seeds": seeds,  # None: single deterministic run
         })
     return {

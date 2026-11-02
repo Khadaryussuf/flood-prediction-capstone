@@ -41,6 +41,50 @@ export interface ReplayWindow {
   actual_next_mm: number
 }
 
+/** One row of GET /predictions */
+export interface StoredPrediction {
+  id: number
+  created_at: string
+  input: Reading[]
+  predicted_mm: number
+  risk_level: string
+}
+
+/** One model in GET /api/comparison. The seed values are null for ARIMA and
+ *  Persistence, which are single runs. */
+export interface ComparisonModel {
+  model: string
+  run: string
+  is_baseline: boolean
+  selected: boolean
+  val_rmse_mm: number
+  val_mae_mm: number
+  val_heavy_hit: number
+  val_heavy_actual: number
+  test_rmse_mm: number
+  test_mae_mm: number
+  test_r2: number
+  test_heavy_hit: number
+  test_heavy_actual: number
+  test_heavy_recall: number
+  test_max_pred_mm: number
+  test_max_actual_mm: number
+  seeds: {
+    n_seeds: number
+    seed_list: number[]
+    mean: { val_rmse_mm: number; test_rmse_mm: number; test_heavy_hit: number }
+    sd: { val_rmse_mm: number; test_rmse_mm: number; test_heavy_hit: number }
+  } | null
+}
+
+/** GET /api/comparison */
+export interface Comparison {
+  selection_rule: string
+  heavy_rain_mm: number
+  sources: string[]
+  models: ComparisonModel[]
+}
+
 /** POST /predict */
 export interface Prediction {
   id: number

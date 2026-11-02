@@ -2,10 +2,12 @@
 // responses captured from the app (see fixtures/), not made-up numbers.
 import { vi } from 'vitest'
 
+import comparison from './fixtures/comparison.json'
 import health from './fixtures/health.json'
 import meta from './fixtures/meta.json'
 import predict0 from './fixtures/predict_0.json'
 import predict1 from './fixtures/predict_1.json'
+import predictions from './fixtures/predictions.json'
 import replay0 from './fixtures/replay_0.json'
 import replay1 from './fixtures/replay_1.json'
 
@@ -32,6 +34,8 @@ export function mockApi() {
 
       if (input === '/health') return json(health)
       if (input === '/api/meta') return json(meta)
+      if (input === '/api/comparison') return json(comparison)
+      if (input === '/predictions') return json(predictions)
       const replay = input.match(/^\/api\/replay\/(\d+)$/)
       if (replay) return replays[replay[1]] ? json(replays[replay[1]]) : json({ error: 'not in fixtures' }, 400)
       if (input === '/predict' && method === 'POST') {
@@ -50,4 +54,4 @@ export function mockApiDown() {
   vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))))
 }
 
-export const fixtures = { health, meta, predict0, predict1, replay0, replay1 }
+export const fixtures = { comparison, health, meta, predict0, predict1, predictions, replay0, replay1 }

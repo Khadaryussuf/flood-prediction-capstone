@@ -39,7 +39,7 @@ describe('App', () => {
     expect(screen.getByTestId('served-model')).toHaveTextContent('cnn_lstm (cnn_lstm_model.keras)')
     expect(screen.getAllByText('Low intensity').length).toBeGreaterThan(0)
     expect(screen.getByText('0.0570 mm')).toBeInTheDocument()
-    expect(screen.getByText(/3 Apr 2025, 02:00/)).toBeInTheDocument()
+    expect(screen.getAllByText(/3 Apr 2025, 02:00/).length).toBeGreaterThan(0)
     expect(screen.getByText(/Replay of held-out test period \(not live\)/)).toBeInTheDocument()
 
     // The replayed window goes through /predict, so the backend stores it

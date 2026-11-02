@@ -5,14 +5,16 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { REPLAY_LABEL } from '@/lib/copy'
 import { formatDay } from '@/lib/format'
-import type { Health, Meta } from '@/lib/types'
+import type { Comparison, Health, Meta } from '@/lib/types'
+import { LimitationsSheet } from './LimitationsSheet'
 
 interface TopBarProps {
   health: Health | null
   meta: Meta | null
+  comparison: Comparison | null
 }
 
-export function TopBar({ health, meta }: TopBarProps) {
+export function TopBar({ health, meta, comparison }: TopBarProps) {
   return (
     <header className="border-b bg-card">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
@@ -29,7 +31,7 @@ export function TopBar({ health, meta }: TopBarProps) {
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Badge variant="outline" className="h-7 gap-1.5 border-primary/40 px-2.5 font-semibold text-primary">
+              <Badge variant="outline" className="h-7 gap-1.5 border-primary/40 px-2.5 font-semibold text-primary max-sm:[&>svg]:hidden">
                 <History aria-hidden />
                 REPLAY
               </Badge>
@@ -44,6 +46,7 @@ export function TopBar({ health, meta }: TopBarProps) {
             <span className="sr-only">Serving model:</span>
             {health ? health.model : '…'}
           </Badge>
+          <LimitationsSheet meta={meta} comparison={comparison} />
           <ThemeToggle />
         </div>
       </div>
