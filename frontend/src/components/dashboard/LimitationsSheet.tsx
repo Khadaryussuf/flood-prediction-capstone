@@ -73,19 +73,23 @@ export function LimitationsSheet({ meta, comparison }: LimitationsSheetProps) {
           Limitations
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
+      <SheetContent side="right" className="w-full sm:max-w-md">
         <SheetHeader>
           <SheetTitle>Limitations</SheetTitle>
           <SheetDescription>What this dashboard can and can't tell you.</SheetDescription>
         </SheetHeader>
-        <dl className="flex flex-col gap-4 px-4 pb-6 text-sm">
-          {items.map(({ title, text }) => (
-            <div key={title}>
-              <dt className="font-medium">{title}</dt>
-              <dd className="mt-0.5 text-muted-foreground">{text}</dd>
-            </div>
-          ))}
-        </dl>
+        {/* Only this part scrolls, so the title and close button stay in view.
+            It takes focus so the keyboard can scroll it too. */}
+        <div role="region" aria-label="Limitations list" tabIndex={0} className="min-h-0 flex-1 overflow-y-auto">
+          <dl className="flex flex-col gap-4 px-4 pb-6 text-sm">
+            {items.map(({ title, text }) => (
+              <div key={title}>
+                <dt className="font-medium">{title}</dt>
+                <dd className="mt-0.5 text-muted-foreground">{text}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </SheetContent>
     </Sheet>
   )

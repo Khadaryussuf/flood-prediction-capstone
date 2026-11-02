@@ -1,3 +1,4 @@
+import { useState, type UIEvent } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Cell, ErrorBar, LabelList, XAxis, YAxis } from 'recharts'
 
@@ -51,8 +52,19 @@ function ComparisonBody({ comparison }: { comparison: Comparison }) {
   const findings = [caughtMoreThanServed(models), withinSeedSpread(models)].filter(Boolean) as string[]
   const nSeeds = models.find((m) => m.seeds)?.seeds?.n_seeds
 
+  // The narrow-screen fade goes away at the end of the table, so it doesn't dim the last column
+  const [atEnd, setAtEnd] = useState(false)
+  const trackScroll = (event: UIEvent<HTMLDivElement>) => {
+    const { scrollLeft, clientWidth, scrollWidth } = event.target as HTMLElement
+    setAtEnd(scrollLeft + clientWidth >= scrollWidth - 1)
+  }
+
   return (
     <>
+      <p className="-mb-3 text-xs text-muted-foreground lg:hidden" data-testid="table-scroll-hint">
+        Scroll the table sideways to see all columns →
+      </p>
+      <div className="relative" onScrollCapture={trackScroll}>
       <Table data-testid="comparison-table">
         <TableHeader>
           <TableRow>
@@ -87,6 +99,14 @@ function ComparisonBody({ comparison }: { comparison: Comparison }) {
           ))}
         </TableBody>
       </Table>
+      {!atEnd && (
+        <div
+          aria-hidden
+          data-testid="table-scroll-fade"
+          className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-linear-to-l from-card to-transparent lg:hidden"
+        />
+      )}
+      </div>
       <p className="text-xs text-muted-foreground">
         RMSE in mm. The validation RMSE, test RMSE and heavy-hour columns are the published seed-42 runs.
         {nSeeds ? ` Seed columns cover ${nSeeds} seeds of the same model.` : ''}
@@ -153,7 +173,7 @@ function MetricChart({ title, models, value, sd, decimals, domainMax }: MetricCh
           <YAxis type="category" dataKey="name" width={118} tickLine={false} axisLine={false} interval={0} />
           <Bar dataKey="value" radius={[0, 2, 2, 0]} isAnimationActive={false}>
             {rows.map((row) => <Cell key={row.name} fill={row.fill} />)}
-            <ErrorBar dataKey="sd" direction="x" width={6} stroke="var(--foreground)" />
+            <ErrorBar dataKey="sd" direction="x" width={6} stroke="var(--foreground)" isAnimationActive={false} />
             <LabelList
               dataKey="value"
               content={({ x, y, width, height, index }) => {

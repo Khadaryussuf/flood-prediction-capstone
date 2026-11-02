@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
@@ -93,6 +93,21 @@ describe('ModelComparison', () => {
     expect(table.querySelector('[data-model="CNN-LSTM"]')).toHaveTextContent('Served')
   })
 
+  it('hints at sideways scrolling on narrow screens, and drops the fade at the end', () => {
+    render(<ModelComparison comparison={results} error={null} />)
+    expect(screen.getByTestId('table-scroll-hint')).toHaveClass('lg:hidden')
+    expect(screen.getByTestId('table-scroll-fade')).toHaveClass('lg:hidden')
+
+    const scroller = screen.getByTestId('comparison-table').parentElement as HTMLElement
+    Object.defineProperties(scroller, {
+      scrollLeft: { value: 200 },
+      clientWidth: { value: 300 },
+      scrollWidth: { value: 500 },
+    })
+    fireEvent.scroll(scroller)
+    expect(screen.queryByTestId('table-scroll-fade')).not.toBeInTheDocument()
+  })
+
   it('states the awkward results, computed from the data', () => {
     expect(caughtMoreThanServed(results.models)).toBe(
       'Persistence (12/35) and ARIMA (9/35) caught more heavy hours than the served CNN-LSTM (7/35).',
@@ -117,6 +132,15 @@ describe('LimitationsSheet', () => {
     expect(sheet).toHaveTextContent('Only 14 validation hours and 35 test hours')
     expect(sheet).toHaveTextContent('highest test prediction is 4.31 mm, against a highest actual of 9.30 mm')
     expect(sheet).toHaveTextContent('never reaches the high class')
+
+    // Only the list scrolls: the close button and title are outside it
+    const list = within(sheet).getByRole('region', { name: 'Limitations list' })
+    expect(list).toHaveClass('overflow-y-auto')
+    expect(list).toHaveAttribute('tabindex', '0')
+    expect(sheet).not.toHaveClass('overflow-y-auto')
+    expect(list).not.toContainElement(within(sheet).getByRole('button', { name: 'Close' }))
+    expect(list).not.toContainElement(within(sheet).getByRole('heading', { name: 'Limitations' }))
+
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })

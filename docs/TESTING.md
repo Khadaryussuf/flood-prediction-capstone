@@ -200,14 +200,14 @@ T1-T26 are unchanged and passed in the same run.
 | `src/App.test.tsx` | 3 | The disclaimer shows word for word with the API down; the hero shows the model from `/health` and the prediction; stepping posts the next window to `/predict` |
 | `src/components/dashboard/RiskBadge.test.tsx` | 5 | Each class shows as text; an unknown class shows as sent; gauge bands come from the API's thresholds |
 | `src/components/theme-provider.test.tsx` | 2 | The dark class and remembered choice; switching still works with storage blocked |
-| `src/components/dashboard/panels.test.tsx` | 9 | Window chart hours and tabs; timeline order, classes, caption, replay hour, empty and error states; comparison rows and computed findings; limitations sheet opens by keyboard with real numbers |
+| `src/components/dashboard/panels.test.tsx` | 10 | Window chart hours and tabs; timeline order, classes, caption, replay hour, empty and error states; comparison rows, computed findings and the table's scroll cue; limitations sheet opens by keyboard with real numbers, and only its list scrolls |
 
 ### Results of this run
 
 | Check | Result |
 |-------|--------|
 | `python -m pytest -q` | **41 passed in 5.44 s** |
-| `npm test` | **19 passed** in 4 files |
+| `npm test` | **19 passed** in 4 files; **20 passed** after the follow-up change below, with pytest still 41 passed |
 | `npm run contrast` | All pairs pass, both themes |
 | `npm run build` | Succeeded; output identical to the committed `backend/static/app/` |
 
@@ -227,10 +227,18 @@ Not checked:
 - The High class in a real view. The served model's highest test prediction is
   4.31 mm, so no replay hour reaches it. Vitest covers its badge text, and its
   marker appears only as a legend icon.
-- Scrolling the limitations sheet to its end in a browser.
 
-Known and accepted: at 360 px the comparison table scrolls sideways within its
-card.
+Limitations sheet and table cue, re-checked after the follow-up change on top of
+commit `9425983`:
+- With the sheet scrolled to the bottom by the End key, at 360 px dark and
+  1280 px light, the close button and title stay in view and the button closes
+  the sheet. No browser console errors.
+- The comparison table is 899 px wide, so it scrolls sideways within its card
+  below a 979 px viewport (measured at 360, 640, 768: overflow; at 1000, 1023,
+  1024, 1100, 1280, 1440: fits). The text cue and fade show below 1024 px.
+
+Known and accepted: from about 979 to 1023 px the cue shows although the table
+fits.
 
 ### Issues found during development
 
