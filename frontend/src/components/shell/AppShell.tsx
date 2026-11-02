@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 
 import { DisclaimerStrip } from '@/components/dashboard/DisclaimerStrip'
+import { AlertBell } from '@/components/shell/AlertBell'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
 import {
@@ -116,7 +117,7 @@ function UserMenu() {
 }
 
 /** The frame around every logged-in page: sidebar, top bar and disclaimer. */
-export function AppShell({ children, topBarExtra }: { children: ReactNode; topBarExtra?: ReactNode }) {
+export function AppShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const { pathname } = useLocation()
   const current = [...MAIN_NAV, DEMO_NAV].find((item) => item.to === pathname)?.label ?? 'FloodWatch'
@@ -148,7 +149,7 @@ export function AppShell({ children, topBarExtra }: { children: ReactNode; topBa
           </Sheet>
           <h1 className="min-w-0 truncate text-base font-semibold">{current}</h1>
           <div className="ml-auto flex items-center gap-2">
-            {topBarExtra}
+            <AlertBell />
             <ThemeToggle />
             <UserMenu />
           </div>

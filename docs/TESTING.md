@@ -371,3 +371,38 @@ this way, which the automated checks had passed:
 Also found before testing: the app's `same-origin` referrer policy could have blocked
 OpenStreetMap tiles, which need a referrer. Now `strict-origin-when-cross-origin` (M11).
 Tiles load in all four views.
+## Alerts
+
+Added in Module 4, in `tests/test_alerts.py` (A1-A23) and
+`frontend/src/pages/AlertsPage.test.tsx` (8 tests). The mail server is a stand-in, so
+**no real email has been sent**: that needs SMTP settings in `.env`. Run recorded:
+2026-11-02. All PASSED.
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| A1 | Which levels alert | Medium and High yes, Low no | As expected. PASSED | None |
+| A2 | Recipients | One row per active account; pending and disabled get none | As expected. PASSED | None |
+| A3 | No SMTP settings | Row says "not sent: email not configured"; alert still raised | As expected. PASSED | None |
+| A4 | Email sent | Status "sent"; Medium in the subject; mm and disclaimer in the body | As expected. PASSED | None |
+| A5 | One recipient refused | That row "failed: ..."; the next still sent | As expected. PASSED | None |
+| A6 | Server unreachable | "failed: ConnectionRefusedError", with no server text in the status | As expected. PASSED | None |
+| A7 | Cool-down | A repeat within 3 hours raises nothing | As expected. PASSED | None |
+| A8 | Rise in level | Medium to High breaks through; falling back doesn't | As expected. PASSED | None |
+| A9 | After the cool-down | Alerts again | As expected. PASSED | None |
+| A10 | Through a real refresh | A High prediction raises an alert | As expected. PASSED | None |
+| A11 | Low refresh | No alert | As expected. PASSED | None |
+| A12 | Bug in alerting | The reading is kept and stays Live | As expected. PASSED | None |
+| A13 | Backfill | Never alerts, even for high values | As expected. PASSED | None |
+| A14 | Alerts list | Timestamp, level, recipient, status; no password data | As expected. PASSED | None |
+| A15 | Acknowledge own | Recorded; bell count falls | As expected. PASSED | None |
+| A16 | Someone else's alert | Responder gets 403, no button offered | As expected. PASSED | None |
+| A17 | Administrator | Can acknowledge anyone's | As expected. PASSED | None |
+| A18 | Acknowledge | Needs CSRF; unknown alert 404 | As expected. PASSED | None |
+| A19-A20 | Search | Level (Medium or moderate), status and recipient; `%` isn't a wildcard | As expected. PASSED | None |
+| A21 | Dashboard banner | Shows after an alert; gone after 6 hours | As expected. PASSED | None |
+| A22 | Preview count | Uses the same cool-down rule | As expected. PASSED | None |
+| A23 | Roles | Responders and administrators both get rows | As expected. PASSED | None |
+
+The Alerts screenshots used two alerts injected into the scratch database, with a mix
+of statuses set by hand, because the real forecast stayed Low. They check the layout,
+not delivery.

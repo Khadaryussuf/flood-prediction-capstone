@@ -151,6 +151,32 @@ class RiskHistory(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime)
 
 
+class AlertEvent(Base):
+    """One alert raised for a live prediction."""
+    __tablename__ = "alert_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    risk_level: Mapped[str] = mapped_column(String(20))
+    predicted_mm: Mapped[float] = mapped_column(Float)
+    target_time: Mapped[datetime] = mapped_column(DateTime)  # Nairobi time
+
+
+class AlertDelivery(Base):
+    """One row per recipient of an alert, with its email status. Keeps the name and
+    address as they were when it was sent."""
+    __tablename__ = "alert_deliveries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("alert_events.id"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    recipient_email: Mapped[str] = mapped_column(String(254))
+    recipient_name: Mapped[str] = mapped_column(String(120))
+    delivery_status: Mapped[str] = mapped_column(String(120))
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    acknowledged_by: Mapped[str | None] = mapped_column(String(254), nullable=True)
+
+
 class AuditLog(Base):
     """Administrator actions: who did what, and when."""
     __tablename__ = "audit_log"

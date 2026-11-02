@@ -3,6 +3,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { AppShell } from '@/components/shell/AppShell'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/lib/auth'
+import { AlertsPage } from '@/pages/AlertsPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import EvidencePage from '@/pages/EvidencePage'
 import { LoginPage } from '@/pages/LoginPage'
@@ -37,7 +38,7 @@ export default function App() {
       <Route element={<RequireLogin />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/trends" element={<Placeholder title="Historical Trends" />} />
-        <Route path="/alerts" element={<Placeholder title="Alerts" />} />
+        <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/evidence" element={<EvidencePage />} />
         <Route path="/demo" element={<Placeholder title="Demo mode" />} />
         <Route element={<RequireAdmin />}>

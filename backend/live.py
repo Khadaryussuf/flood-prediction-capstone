@@ -6,6 +6,7 @@ says so. The model's risk applies to this one grid cell only.
 """
 
 import json
+import logging
 import time
 from datetime import timedelta
 
@@ -15,11 +16,12 @@ from flask import Blueprint, current_app, jsonify
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend import db, security, thresholds as limits
+from backend import alerts, db, security, thresholds as limits
 from backend.db import LiveSnapshot, RiskHistory
 from pipeline import config
 
 bp = Blueprint("live", __name__)
+log = logging.getLogger(__name__)
 
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 TIMEOUT_SECONDS = 20
@@ -131,9 +133,11 @@ def refresh(app):
         save_history(session, target_time, predicted_mm, level, "live")
         session.commit()
         snapshot_id = snapshot.id
-    after_refresh = app.config.get("AFTER_REFRESH")
-    if after_refresh:
-        after_refresh(app, snapshot_id)
+    # A problem with alerting mustn't lose the reading
+    try:
+        alerts.process_prediction(engine, level, predicted_mm, target_time)
+    except Exception:
+        log.exception("Alert processing failed")
     return snapshot_id
 
 
@@ -194,6 +198,7 @@ def current():
             "source_note": SOURCE_NOTE,
             "timezone": config.TIMEZONE,
             "last_error": latest.error if latest and not latest.ok else None,
+            "alert": alerts.latest_banner(session),
         }
         if good is None:
             return jsonify({**body, "last_updated": None, "target_time": None, "predicted_mm": None,

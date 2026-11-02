@@ -32,6 +32,30 @@ export interface LiveCurrent {
   risk_level: string | null
   window: ({ time: string } & Reading)[]
   forecast: { time: string; precipitation: number }[]
+  /** The latest alert, if recent */
+  alert: {
+    at: string
+    risk_level: string
+    predicted_mm: number
+    target_time: string
+    recipients: number
+    emails_sent: number
+  } | null
+}
+
+/** One row of GET /api/alerts: one recipient of one alert */
+export interface AlertRow {
+  id: number
+  at: string
+  risk_level: string
+  predicted_mm: number
+  target_time: string
+  recipient: string
+  recipient_email: string
+  delivery_status: string
+  acknowledged_at: string | null
+  acknowledged_by: string | null
+  can_acknowledge: boolean
 }
 
 /** GET /api/map/forecast: weather forecast, not model risk */

@@ -28,6 +28,7 @@ const live = (overrides: Partial<LiveCurrent> = {}): LiveCurrent => ({
   risk_level: 'moderate',
   window: [reading(14), reading(15)],
   forecast: [],
+  alert: null,
   ...overrides,
 })
 

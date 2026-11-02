@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { AlertTriangle, Clock, Droplets, Gauge, Thermometer, Waves, Wind, type LucideIcon } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { AlertTriangle, BellRing, Clock, Droplets, Gauge, Thermometer, Waves, Wind, type LucideIcon } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, ReferenceLine, XAxis, YAxis } from 'recharts'
 
 import { riskStyle } from '@/components/dashboard/risk'
@@ -90,6 +91,23 @@ function FreshnessChip({ live }: { live: LiveCurrent }) {
       </span>
       <span className="text-muted-foreground">{note}</span>
     </div>
+  )
+}
+
+function AlertBanner({ alert }: { alert: NonNullable<LiveCurrent['alert']> }) {
+  const { recipients, emails_sent: sent } = alert
+  return (
+    <Alert role="status" data-testid="alert-banner">
+      <BellRing aria-hidden />
+      <AlertTitle>{riskStyle(alert.risk_level).label} alert raised {formatHour(alert.at)}</AlertTitle>
+      <AlertDescription>
+        <p>
+          {formatMm(alert.predicted_mm)} mm predicted for {formatHour(alert.target_time)}.
+          {' '}{recipients} {recipients === 1 ? 'recipient' : 'recipients'}, {sent} {sent === 1 ? 'email' : 'emails'} sent.
+          {' '}<Link to="/alerts" className="font-medium underline underline-offset-4">View alerts</Link>
+        </p>
+      </AlertDescription>
+    </Alert>
   )
 }
 
@@ -199,6 +217,7 @@ export function DashboardPage() {
       )}
       {live && live.predicted_mm !== null && (
         <>
+          {live.alert && <AlertBanner alert={live.alert} />}
           <RiskBanner live={live} />
           <FreshnessChip live={live} />
           <Readings live={live} />

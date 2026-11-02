@@ -1,7 +1,7 @@
 // All calls go to the same server that serves the page (Flask), so the
 // paths are relative to the site root. In `npm run dev`, Vite forwards
 // them to Flask (see vite.config.ts).
-import type { Comparison, Health, LiveCurrent, MapForecast, Meta, Prediction, Reading, ReplayWindow, StoredPrediction } from './types'
+import type { AlertRow, Comparison, Health, LiveCurrent, MapForecast, Meta, Prediction, Reading, ReplayWindow, StoredPrediction } from './types'
 
 /** The session's CSRF token, sent on every request that changes something. */
 let csrfToken = ''
@@ -48,6 +48,17 @@ export const postJson = <T>(path: string, body: unknown, method = 'POST') =>
 export const getHealth = () => request<Health>('/health')
 
 export const getMeta = () => request<Meta>('/api/meta')
+
+export const getAlerts = (search = '') =>
+  request<AlertRow[]>(search ? `/api/alerts?q=${encodeURIComponent(search)}` : '/api/alerts')
+
+export const getUnreadAlerts = () => request<{ count: number }>('/api/alerts/unread')
+
+export const acknowledgeAlert = (id: number) => postJson(`/api/alerts/${id}/ack`, {})
+
+/** Tells the bell to recount after an acknowledgement */
+export const ALERTS_CHANGED = 'floodwatch:alerts-changed'
+export const notifyAlertsChanged = () => window.dispatchEvent(new Event(ALERTS_CHANGED))
 
 export const getLive = () => request<LiveCurrent>('/api/live/current')
 
