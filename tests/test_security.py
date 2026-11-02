@@ -275,7 +275,7 @@ def test_last_active_admin_rule_blocks_another_admin(app, admin, make_user, monk
 ])
 def test_csrf_missing_or_wrong_token_rejected(admin, method, path, body):
     assert admin.open(path, method=method, json=body, send_csrf=False).status_code == 403
-    bad = admin.open(path, method=method, json=body, headers={"X-CSRF-Token": "wrong"}, send_csrf=False)
+    bad = admin.open(path, method=method, json=body, headers={"X-CSRF-Token": new_password()}, send_csrf=False)
     assert bad.status_code == 403
     assert "CSRF" in bad.get_json()["error"]
 
@@ -363,20 +363,27 @@ def tracked_files():
     return output.stdout.splitlines()
 
 
+def repo_files():
+    """Tracked files plus new ones that aren't ignored, so the scan also covers
+    what is about to be committed."""
+    output = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard"],
+                            cwd=config.ROOT, capture_output=True, text=True, check=True)
+    return output.stdout.splitlines()
+
+
 SKIP_SUFFIXES = (".png", ".keras", ".pkl", ".npz", ".lock", ".svg", ".csv")
 SKIP_PARTS = ("package-lock.json", "backend/static/", "experiments/", "THIRD_PARTY.md", "frontend/src/test/fixtures/")
 # A credential-like name given a literal value in quotes
 HARD_CODED = re.compile(
     r"""(?ix)\b(password|passwd|pwd|secret|secret_key|api_?key|token|smtp_password)\b["']?\s*[:=]\s*["'][^"'\s{}$<]{4,}["']""")
 # Assignments in env-style files
-ENV_VALUE = re.compile(r"(?m)^\s*(SECRET_KEY|SMTP_PASSWORD|SMTP_USER)\s*=\s*\S+")
-ALLOWED = {"csrf_token", "X-CSRF-Token"}
+ENV_VALUE = re.compile(r"(?m)^[ \t]*(SECRET_KEY|SMTP_PASSWORD|SMTP_USER)[ \t]*=[ \t]*\S+")
 
 
 # S31
 def test_no_hard_coded_passwords_or_secrets_in_the_repo():
     findings = []
-    for name in tracked_files():
+    for name in repo_files():
         if name.endswith(SKIP_SUFFIXES) or any(part in name for part in SKIP_PARTS):
             continue
         path = config.ROOT / name

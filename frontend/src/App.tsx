@@ -3,6 +3,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { AppShell } from '@/components/shell/AppShell'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/lib/auth'
+import { DashboardPage } from '@/pages/DashboardPage'
 import EvidencePage from '@/pages/EvidencePage'
 import { LoginPage } from '@/pages/LoginPage'
 import { Placeholder } from '@/pages/Placeholder'
@@ -34,7 +35,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route element={<RequireLogin />}>
-        <Route path="/dashboard" element={<Placeholder title="Dashboard" />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/trends" element={<Placeholder title="Historical Trends" />} />
         <Route path="/alerts" element={<Placeholder title="Alerts" />} />
         <Route path="/evidence" element={<EvidencePage />} />

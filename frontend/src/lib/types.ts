@@ -15,6 +15,25 @@ export interface User {
   last_login_at: string | null
 }
 
+export type Freshness = 'Live' | 'Stale' | 'Fallback' | 'Unavailable'
+
+/** GET /api/live/current */
+export interface LiveCurrent {
+  freshness: Freshness
+  thresholds: { below_mm: number; label: string }[]
+  highest_risk: string
+  thresholds_overridden: boolean
+  source_note: string
+  timezone: string
+  last_error: string | null
+  last_updated: string | null
+  target_time: string | null
+  predicted_mm: number | null
+  risk_level: string | null
+  window: ({ time: string } & Reading)[]
+  forecast: { time: string; precipitation: number }[]
+}
+
 /** One row of GET /api/admin/audit */
 export interface AuditEntry {
   id: number

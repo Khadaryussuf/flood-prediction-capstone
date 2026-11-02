@@ -315,3 +315,37 @@ Run recorded: 2026-11-02, Module 1. Results for all S tests: PASSED.
 Frontend (Vitest, `src/pages/access.test.tsx`): 9 tests for the redirect to login,
 server messages, CSRF header, sign-up with no role field, mismatched passwords,
 Settings hidden from responders, approve flow, and self-removal not offered.
+## Live data and scheduler
+
+Added in Module 2, in `tests/test_live.py`. The forecast API is stubbed; the model,
+database and app are real. Run recorded: 2026-11-02. Results for all L tests: PASSED.
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| L1 | Same path as /predict | The real test window gives 0.0570 mm through live, equal to /predict | As expected. PASSED | None |
+| L2 | Window and target | 24 hours ending at the current hour; target is the next hour; 12 forecast hours | As expected. PASSED | None |
+| L3 | Fresh reading | Live, with the note that inputs differ from ERA5 | As expected. PASSED | None |
+| L4 | Retry | Two failures then success: 3 calls, stored | As expected. PASSED | None |
+| L5 | Fallback | All attempts fail: Fallback, last good value and time kept, error recorded | As expected. PASSED | None |
+| L6 | Recovery | Back to Live after a good fetch | As expected. PASSED | None |
+| L7 | Stale | Over 90 minutes old with no failure | As expected. PASSED | None |
+| L8 | No data yet | Unavailable, no invented value | As expected. PASSED | None |
+| L9 | Gaps | Filled by linear interpolation, as in preprocessing | As expected. PASSED | None |
+| L10 | Malformed response | Recorded as a failed attempt, not raised | As expected. PASSED | None |
+| L11 | Repeat refresh | One history row per hour | As expected. PASSED | None |
+| L12 | Backfill | Fills history once, marked backfill | As expected. PASSED | None |
+| L13 | Schedule | Next run 2 minutes past the next hour, across midnight too | As expected. PASSED | None |
+| L14 | Errors | A failure or bug retries in 10 minutes, without stopping the loop | As expected. PASSED | None |
+| L15 | Thread | Starts, runs and stops | As expected. PASSED | None |
+| L16 | Manual refresh | Administrators only; 502 if the fetch fails | As expected. PASSED | None |
+
+Real run on 2026-11-02 against the live API, on a scratch database: 1 good snapshot
+predicting 0.0238 mm (low), and 742 backfilled hours from 3 October, all low, with a
+highest prediction of 1.28 mm. Dashboard screenshots at 360 and 1280 px in both
+themes were opened and checked, with no overflow or console errors.
+
+S31 correction: the repo scan looked only at tracked files, so files new in Module 1
+weren't scanned until committed. It now also covers untracked files that aren't
+ignored. It then reported two false positives, both fixed at the source: the blank
+`SECRET_KEY=` line in `.env.example` (the pattern ran across lines) and a literal bad
+CSRF value in a test (now random).

@@ -114,6 +114,43 @@ class LoginThrottle(Base):
     locked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
+class AppSetting(Base):
+    """Settings changed in the app, such as threshold overrides. Values are JSON."""
+    __tablename__ = "app_settings"
+
+    key: Mapped[str] = mapped_column(String(60), primary_key=True)
+    value: Mapped[str] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class LiveSnapshot(Base):
+    """One attempt to fetch live data. Failed attempts are kept (ok=False) so the
+    dashboard can say it is showing the last good reading."""
+    __tablename__ = "live_snapshots"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime)
+    ok: Mapped[bool] = mapped_column(Boolean)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    target_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # Nairobi time
+    window_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    forecast_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    predicted_mm: Mapped[float | None] = mapped_column(Float, nullable=True)
+    risk_level: Mapped[str | None] = mapped_column(String(20), nullable=True)
+
+
+class RiskHistory(Base):
+    """The model's prediction for each hour, for the Historical page."""
+    __tablename__ = "risk_history"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    target_time: Mapped[datetime] = mapped_column(DateTime, unique=True, index=True)  # Nairobi time
+    predicted_mm: Mapped[float] = mapped_column(Float)
+    risk_level: Mapped[str] = mapped_column(String(20))
+    source: Mapped[str] = mapped_column(String(20))  # live or backfill
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+
+
 class AuditLog(Base):
     """Administrator actions: who did what, and when."""
     __tablename__ = "audit_log"

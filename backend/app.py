@@ -23,17 +23,19 @@ import json
 import math
 import os
 import secrets
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
 import joblib
+import numpy as np
 import pandas as pd
 from flask import Flask, jsonify, redirect, request, send_file
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from tensorflow import keras
 
-from backend import auth, security
+from backend import auth, live, scheduler, security, thresholds as limits
 from backend.db import DEFAULT_DATABASE_URL, Prediction, make_engine  # noqa: F401
 from backend.env import load_env
 from pipeline import config
@@ -83,14 +85,6 @@ def validate_readings(body):
             if not is_number(reading[feature]):
                 return f"Reading {i} field '{feature}' must be a number"
     return None
-
-
-def risk_level(predicted_mm):
-    """Map predicted rainfall to a risk level using the AMS rain intensity classes."""
-    for limit, label in config.RISK_THRESHOLDS_MM:
-        if predicted_mm < limit:
-            return label
-    return config.HIGHEST_RISK
 
 
 def load_test_split():
@@ -200,6 +194,23 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
     app.after_request(security.add_security_headers)
     app.register_blueprint(auth.bp)
 
+    predict_lock = threading.Lock()  # the scheduler thread also uses the model
+
+    def predict_many(frames):
+        """The prediction path: readings in training column order, scaled, through
+        the model, back to mm. Rainfall can't be negative."""
+        scaled = np.stack([scaler.transform(frame) for frame in frames])
+        with predict_lock:
+            outputs = model.predict(scaled, verbose=0)
+        return [round(max(0.0, float(to_mm(value[0], scaler, target_idx))), 4) for value in outputs]
+
+    def predict_mm(frame):
+        return predict_many([frame])[0]
+
+    app.config["PREDICT_MM"] = predict_mm
+    app.config["PREDICT_MANY"] = predict_many
+    app.register_blueprint(live.bp)
+
     @app.get("/health")
     def health():
         return jsonify({"status": "ok", "model": model_name,
@@ -214,26 +225,19 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
             return jsonify({"error": error}), 400
         readings = body["readings"]
 
-        # 2. Put the readings in the same column order used in training, and scale
+        # 2. Put the readings in the same column order used in training, and predict
         frame = pd.DataFrame(readings)[config.FEATURES]
-        scaled = scaler.transform(frame)
+        predicted_mm = predict_mm(frame)
 
-        # 3. Predict. The model expects shape (samples, hours, features)
-        window = scaled.reshape(1, config.WINDOW, len(config.FEATURES))
-        scaled_pred = model.predict(window, verbose=0)[0, 0]
-
-        # 4. Convert back to mm; rainfall can't be negative
-        predicted_mm = round(max(0.0, float(to_mm(scaled_pred, scaler, target_idx))), 4)
-        level = risk_level(predicted_mm)
-
-        # 5. Store the prediction
-        row = Prediction(
-            created_at=datetime.now(timezone.utc),
-            input_json=json.dumps(frame.to_dict(orient="records")),
-            predicted_mm=predicted_mm,
-            risk_level=level,
-        )
+        # 3. Store the prediction
         with Session(engine) as session:
+            level = limits.classify(predicted_mm, limits.current_thresholds(session))
+            row = Prediction(
+                created_at=datetime.now(timezone.utc),
+                input_json=json.dumps(frame.to_dict(orient="records")),
+                predicted_mm=predicted_mm,
+                risk_level=level,
+            )
             session.add(row)
             session.commit()
             row_id = row.id
@@ -285,6 +289,8 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
 
     @app.get("/api/meta")
     def meta():
+        with Session(engine) as session:
+            active_thresholds = limits.current_thresholds(session)
         test = replay_split()
         window_count = len(test) - config.WINDOW
         # Target hour i is row i + WINDOW, the same pairing as make_windows
@@ -294,8 +300,7 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
             "disclaimer": DISCLAIMER,
             "data_label": REPLAY_LABEL,
             "timezone": config.TIMEZONE,
-            "thresholds": [{"below_mm": limit, "label": label}
-                           for limit, label in config.RISK_THRESHOLDS_MM],
+            "thresholds": limits.thresholds_payload(active_thresholds),
             "highest_risk": config.HIGHEST_RISK,
             "test_period": {"start": test.index[0].isoformat(),
                             "end": test.index[-1].isoformat()},
@@ -333,4 +338,6 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
 
 
 if __name__ == "__main__":
-    create_app().run(host="127.0.0.1", port=5000)
+    flask_app = create_app()
+    scheduler.start(flask_app)
+    flask_app.run(host="127.0.0.1", port=5000)
