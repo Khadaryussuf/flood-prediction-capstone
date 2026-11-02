@@ -1,11 +1,12 @@
-# Flood Prediction Capstone
+# FloodWatch: Flood Prediction Capstone
 
 Real-time flood risk prediction for urban flash flooding in Nairobi
 (ICS 4111 capstone). A CNN-LSTM, chosen by lowest validation RMSE from an LSTM,
 BiLSTM, CNN-LSTM and ARIMA baseline, predicts next-hour rainfall from the
 previous 24 hours of weather. A Flask API serves the prediction with a rainfall
-intensity risk level and stores every prediction in a database. A dashboard
-replays the held-out test period through the served model.
+intensity risk level and stores every prediction in a database. FloodWatch, the
+web app on top of it, gives responders and administrators live risk, a map,
+alerts and history.
 
 ## Setup
 
@@ -28,18 +29,62 @@ python -m pipeline.train         # train the LSTM -> models/lstm_model.keras, mo
 python -m pipeline.evaluate      # test-set metrics -> experiments/run_<timestamp>/
 ```
 
-## Run the backend
+## Run FloodWatch
+
+The built web app is committed, so this needs no Node or npm.
 
 ```
-python -m backend.app            # serves on http://127.0.0.1:5000
+copy .env.example .env           # then set SECRET_KEY, as the file explains
+python -m scripts.create_admin   # first administrator; prompts for the password
+python -m backend.app            # http://127.0.0.1:5000
 ```
+
+The server refuses to start without `SECRET_KEY`. For testing or the defense,
+`python -m scripts.seed_demo` creates 1 administrator and 2 responders, prompting
+for each password. Set `DATABASE_URL` first to keep them out of the real database.
+No passwords are stored in this repository.
+
+On start, and then every hour, the server fetches live data from the Open-Meteo
+forecast API. The first run also fills about 30 days of history. Without network
+access the app still runs, and says it has no reading or is showing the last good one.
+
+To send alert emails, set the `SMTP_*` values in `.env`. Without them, each alert
+records "not sent: email not configured", and in-app alerts still work.
+
+### Screens
+
+| Screen | Who | What |
+|--------|-----|------|
+| Login, sign-up | Anyone | Sign-up creates a Responder account that an administrator must approve |
+| Dashboard | Everyone | Risk banner, Live/Stale/Fallback chip, alert banner, five readings, map, 24-hour rainfall |
+| Historical Trends | Everyone | Predicted rainfall with risk shading, 24h/7d/30d, table, CSV export |
+| Alerts | Everyone | Level, recipient, delivery status, Acknowledge, search; bell with unread count |
+| Settings | Administrators | Users (approve, reject, role, disable), thresholds with preview, activity log |
+| Model evidence | Everyone | The replay and model comparison analysis |
+| Demo mode | Everyone | The replay with play, pause and speed. Labelled as not live; raises no alerts |
+
+Security choices (sessions, CSRF, lockout, access rules) are described in
+[docs/TESTING.md](docs/TESTING.md), under "Security and access control". Changes from
+the proposal and Chapter 4 are in [docs/DEVIATIONS.md](docs/DEVIATIONS.md).
+
+### API
+
+Everything needs a session except `/health`, login, sign-up and static files.
+Requests that change something also need the session's CSRF token in `X-CSRF-Token`;
+`python -m scripts.demo_request` shows how, from a script. `/api/admin/*` needs an
+Administrator.
 
 | Endpoint | Description |
 |----------|-------------|
 | `GET /health` | `status`, and the served `model` and `model_file` |
 | `POST /predict` | Body `{"readings": [...]}` with 24 hourly objects, each with `precipitation`, `temperature_2m`, `relative_humidity_2m`, `surface_pressure`, `wind_speed_10m`. Returns `predicted_mm`, `risk_level` and `"thresholds": "AMS rain intensity classes (not calibrated to Nairobi flood records)"`. |
 | `GET /predictions` | The 20 most recent stored predictions |
-| `GET /dashboard` | The dashboard page |
+| `/api/auth/*` | Session, login, logout, sign-up |
+| `/api/admin/*` | Users, audit log, thresholds and preview, manual refresh |
+| `GET /api/live/current` | Latest live prediction, freshness, readings and recent alert |
+| `GET /api/map/forecast` | Forecast rainfall grid and watch zones: weather forecast, not model risk |
+| `GET /api/history`, `/api/history.csv` | Past predictions, as JSON or CSV |
+| `/api/alerts` | Alert rows, unread count, acknowledge |
 | `GET /api/meta` | Thresholds, disclaimer, replay period and the wettest test hours |
 | `GET /api/replay/<index>` | One 24-hour window from the held-out test split, and the actual next hour |
 | `GET /api/comparison` | Model results, read from `docs/model_comparison.csv` and `docs/seed_robustness.csv` |
@@ -48,29 +93,25 @@ Predictions are stored with SQLAlchemy. Set the `DATABASE_URL` environment
 variable to choose the database. By default it uses `data/predictions.db`
 (SQLite, git-ignored).
 
-## Dashboard
-
-With the backend running, open <http://127.0.0.1:5000/dashboard>. The built page
-is committed in `backend/static/app/`, so this needs no Node or npm, and nothing
-loads from a CDN.
-
-**The data is a replay of the held-out test period, not live.** Each step sends a
-real 24-hour window through `/predict`, so it runs the served model and stores a
-row. Reloading the page also stores a row.
+## About the data on screen
 
 Risk level is hourly rainfall intensity (AMS classes), not flood probability, and
 is not calibrated to Nairobi flood records.
 
-`/predictions` doesn't record which model made a prediction, so the timeline can
-show rows from a previously served model. For a demo, start on a fresh database
-by setting `DATABASE_URL`:
+- **Dashboard:** live Open-Meteo forecast data, run through the same prediction path
+  as `/predict`. These inputs differ from the ERA5 training data, so treat them as
+  indicative. The model's risk applies to one grid cell. The map's rainfall grid and
+  watch zones are a weather forecast, not model risk.
+- **Model evidence and Demo mode:** a replay of the held-out test period, not live.
+  Each step stores a row through `/predict`.
+- `/predictions` doesn't record which model made a prediction, so the Model evidence
+  timeline can show rows from a previously served model. For a demo, start on a fresh
+  database by setting `DATABASE_URL`.
 
-```
-$env:DATABASE_URL = "sqlite:///C:/path/to/demo.db"
-python -m backend.app
-```
+The app uses external services from the browser or server: OpenStreetMap map tiles
+(browser) and Open-Meteo (server). Its own scripts and styles load only from Flask.
 
-To change the dashboard, you need Node 24 or newer; see
+To change the web app, you need Node 24 or newer; see
 [frontend/README.md](frontend/README.md). In short:
 
 ```

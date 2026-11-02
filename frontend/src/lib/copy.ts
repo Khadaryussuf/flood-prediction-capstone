@@ -6,3 +6,5 @@ export const DISCLAIMER =
   'Risk level is hourly rainfall intensity (AMS classes), not flood probability, and is not calibrated to Nairobi flood records.'
 
 export const REPLAY_LABEL = 'Replay of held-out test period (not live)'
+
+export const DEMO_LABEL = 'Demo mode: a replay of past test data, not live. It does not raise alerts.'

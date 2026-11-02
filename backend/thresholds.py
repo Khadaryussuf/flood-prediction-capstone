@@ -29,6 +29,12 @@ def set_setting(session, key, value):
     row.updated_at = utcnow()
 
 
+def clear_setting(session, key):
+    row = session.get(AppSetting, key)
+    if row is not None:
+        session.delete(row)
+
+
 def current_thresholds(session):
     """[(limit_mm, label), ...], lowest first."""
     saved = get_setting(session, THRESHOLDS_KEY)

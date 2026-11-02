@@ -72,6 +72,36 @@ export interface MapForecast {
   zones: { name: string; lat: number; lon: number; rain: number[] }[]
 }
 
+export type HistoryRange = '24h' | '7d' | '30d'
+
+/** GET /api/history */
+export interface HistoryResponse {
+  range: HistoryRange
+  thresholds: { below_mm: number; label: string }[]
+  highest_risk: string
+  rows: { time: string; predicted_mm: number; risk_level: string; source: string }[]
+}
+
+/** GET /api/admin/thresholds */
+export interface ThresholdSettings {
+  medium_from: number
+  high_from: number
+  cooldown_hours: number
+  default_medium_from: number
+  default_high_from: number
+  overridden: boolean
+}
+
+/** POST /api/admin/thresholds/preview */
+export interface ThresholdPreview {
+  days: number
+  hours_checked: number
+  alerts: number
+  medium_hours: number
+  high_hours: number
+  highest_prediction_mm: number | null
+}
+
 /** One row of GET /api/admin/audit */
 export interface AuditEntry {
   id: number

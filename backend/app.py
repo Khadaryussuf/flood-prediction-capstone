@@ -35,7 +35,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from tensorflow import keras
 
-from backend import alerts, auth, live, map_data, scheduler, security, thresholds as limits
+from backend import alerts, auth, history, live, map_data, scheduler, security, thresholds as limits
 from backend.db import DEFAULT_DATABASE_URL, Prediction, make_engine  # noqa: F401
 from backend.env import load_env
 from pipeline import config
@@ -212,6 +212,7 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
     app.register_blueprint(live.bp)
     app.register_blueprint(map_data.bp)
     app.register_blueprint(alerts.bp)
+    app.register_blueprint(history.bp)
 
     @app.get("/health")
     def health():
@@ -234,6 +235,7 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
         # 3. Store the prediction
         with Session(engine) as session:
             level = limits.classify(predicted_mm, limits.current_thresholds(session))
+            overridden = limits.is_overridden(session)
             row = Prediction(
                 created_at=datetime.now(timezone.utc),
                 input_json=json.dumps(frame.to_dict(orient="records")),
@@ -248,7 +250,9 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
             "id": row_id,
             "predicted_mm": predicted_mm,
             "risk_level": level,
-            "thresholds": "AMS rain intensity classes (not calibrated to Nairobi flood records)",
+            "thresholds": ("Limits set by an administrator, not AMS classes (not calibrated to Nairobi flood records)"
+                           if overridden else
+                           "AMS rain intensity classes (not calibrated to Nairobi flood records)"),
         })
 
     @app.get("/predictions")

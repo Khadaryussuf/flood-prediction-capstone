@@ -5,11 +5,13 @@ import { riskStyle } from './risk'
 interface RiskBadgeProps {
   level: string
   size?: 'default' | 'lg'
+  /** Just the class name, for tight spaces such as tables */
+  short?: boolean
   className?: string
 }
 
 /** The risk class as text plus an icon, so it never relies on colour alone. */
-export function RiskBadge({ level, size = 'default', className }: RiskBadgeProps) {
+export function RiskBadge({ level, size = 'default', short = false, className }: RiskBadgeProps) {
   const { label, Icon, badge } = riskStyle(level)
   return (
     <Badge
@@ -18,7 +20,7 @@ export function RiskBadge({ level, size = 'default', className }: RiskBadgeProps
       className={cn(badge, size === 'lg' && 'h-7 gap-1.5 px-3 text-sm', className)}
     >
       <Icon aria-hidden />
-      {label} intensity
+      {short ? label : `${label} intensity`}
     </Badge>
   )
 }

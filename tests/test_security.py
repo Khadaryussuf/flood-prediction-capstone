@@ -405,3 +405,50 @@ def test_env_file_is_ignored_and_not_tracked():
     assert ".env" not in tracked_files()
     result = subprocess.run(["git", "check-ignore", ".env"], cwd=config.ROOT, capture_output=True, text=True)
     assert result.returncode == 0
+
+
+# ---- The account scripts ------------------------------------------------
+
+def run_script(module, monkeypatch, tmp_path, answers, passwords):
+    """Runs a script's main() on a temporary database, answering its prompts."""
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path.as_posix()}/scripts.db")
+    typed = iter(answers)
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(typed))
+    hidden = iter(passwords)
+    monkeypatch.setattr("getpass.getpass", lambda prompt="": next(hidden))
+    module.main()
+    return db.make_engine()
+
+
+# S33
+def test_first_admin_script_prompts_and_creates_an_active_admin(monkeypatch, tmp_path, capsys):
+    from scripts import create_admin
+    password = new_password()
+    engine = run_script(create_admin, monkeypatch, tmp_path,
+                        ["First Admin", "Admin@Example.org", "County"], [password, password])
+    with Session(engine) as session:
+        user = session.scalars(select(User)).one()
+        assert (user.email, user.role, user.status) == ("admin@example.org", ROLE_ADMIN, STATUS_ACTIVE)
+        assert password not in user.password_hash
+    assert password not in capsys.readouterr().out
+    engine.dispose()
+
+
+# S34
+def test_first_admin_script_refuses_a_weak_password(monkeypatch, tmp_path):
+    from scripts import create_admin
+    with pytest.raises(SystemExit, match="at least 10"):
+        run_script(create_admin, monkeypatch, tmp_path, ["A", "a@example.org", "C"], ["short", "short"])
+
+
+# S35
+def test_seed_script_creates_one_admin_and_two_responders(monkeypatch, tmp_path):
+    from scripts import seed_demo
+    passwords = [new_password() for _ in range(3)]
+    engine = run_script(seed_demo, monkeypatch, tmp_path,
+                        ["a@example.org", "b@example.org", "c@example.org"],
+                        [p for password in passwords for p in (password, password)])
+    with Session(engine) as session:
+        roles = sorted(user.role for user in session.scalars(select(User)))
+        assert roles == [ROLE_ADMIN, ROLE_RESPONDER, ROLE_RESPONDER]
+    engine.dispose()

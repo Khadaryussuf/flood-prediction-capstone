@@ -5,11 +5,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/lib/auth'
 import { AlertsPage } from '@/pages/AlertsPage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { DemoPage } from '@/pages/DemoPage'
 import EvidencePage from '@/pages/EvidencePage'
 import { LoginPage } from '@/pages/LoginPage'
-import { Placeholder } from '@/pages/Placeholder'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SignupPage } from '@/pages/SignupPage'
+import { TrendsPage } from '@/pages/TrendsPage'
 
 /** Shows its pages only when logged in. The server enforces this too; this
  *  just sends people to the right screen. */
@@ -37,10 +38,10 @@ export default function App() {
       <Route path="/signup" element={<SignupPage />} />
       <Route element={<RequireLogin />}>
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/trends" element={<Placeholder title="Historical Trends" />} />
+        <Route path="/trends" element={<TrendsPage />} />
         <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/evidence" element={<EvidencePage />} />
-        <Route path="/demo" element={<Placeholder title="Demo mode" />} />
+        <Route path="/demo" element={<DemoPage />} />
         <Route element={<RequireAdmin />}>
           <Route path="/settings" element={<SettingsPage />} />
         </Route>

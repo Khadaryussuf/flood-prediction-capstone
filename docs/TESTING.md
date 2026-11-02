@@ -406,3 +406,66 @@ Added in Module 4, in `tests/test_alerts.py` (A1-A23) and
 The Alerts screenshots used two alerts injected into the scratch database, with a mix
 of statuses set by hand, because the real forecast stayed Low. They check the layout,
 not delivery.
+## Historical Trends, thresholds and Demo mode
+
+Added in Module 5, in `tests/test_history.py` (H1-H16) and
+`frontend/src/pages/module5.test.tsx` (11 tests). Run recorded: 2026-11-02. All PASSED.
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| H1 | Ranges | 24h, 7d and 30d return the right rows | As expected. PASSED | None |
+| H2 | Rows | Oldest first; API value stays "moderate" | As expected. PASSED | None |
+| H3 | Bad range | 400 | As expected. PASSED | None |
+| H4 | CSV export | Header, rows and a filename naming the range | As expected. PASSED | None |
+| H5 | No session | 401 on both | As expected. PASSED | None |
+| H6 | Defaults | From `pipeline/config.py` | As expected. PASSED | None |
+| H7 | Preview | Counts alerts with the cool-down rule; saves nothing | 3 alerts on hand-made rows. PASSED | None |
+| H8 | Preview, default limits, no rain | 0 alerts | As expected. PASSED | None |
+| H9 | Bad settings (10 cases) | 400; nothing saved | As expected. PASSED | None |
+| H10 | Override | `/predict` class follows it, value doesn't change, API words stay low/moderate/high, label says not AMS | As expected. PASSED | None |
+| H11 | Override reaches the Dashboard and replay | New limits shown, marked as overridden | As expected. PASSED | None |
+| H12 | Reset | Back to the defaults; `config` untouched | As expected. PASSED | None |
+| H13 | Audit | Save and reset are logged | As expected. PASSED | None |
+| H14 | Cool-down setting | Used by the alert engine | As expected. PASSED | None |
+| H15 | Responder | 403 on all threshold routes | As expected. PASSED | None |
+| H16 | Preview window | Only the last 30 days | As expected. PASSED | None |
+
+Real preview on 2026-11-02, over 721 hours of live and backfilled predictions: 0 alerts
+at the default limits, because the highest prediction was 1.28 mm; and 9 alerts with
+Medium from 0.5 mm (14 Medium hours). So **with real recent weather the system raised
+no alert at the default limits**. Alert behaviour is tested with stand-in predictions.
+
+Issues found by reading the screenshots, which the automated checks had passed:
+
+| Issue | Corrective action |
+|-------|-------------------|
+| The chart's key said "Medium: 2.5 to 2.9 mm", where the chart happened to stop, not the real limit | The key now shows the real limits, with a test |
+| Axis labels clipped ("2.25" and "0.75") | Margin corrected |
+| At 360 px the table's Class column was cut off | Shorter badge; Source hidden on phones |
+
+### Account scripts (added to Security and access control)
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| S33 | First-admin script | Prompts; creates an active administrator; password isn't printed or stored in the clear | As expected. PASSED | None |
+| S34 | Weak password in the script | Refused | As expected. PASSED | None |
+| S35 | Demo-seed script | 1 administrator and 2 responders, all from prompts | As expected. PASSED | None |
+
+### End-to-end pass in a real browser
+
+Run on 2026-11-02 with Chromium against the real server, on a scratch database. All 14
+checks passed: no session redirects to login and the API gives 401; sign-up says
+awaiting approval; a pending login is refused; a wrong password gets the generic
+error; an administrator approves in Settings; the approval appears in Activity; login
+then works; a responder's sidebar has no Settings; opening /settings lands on the
+Dashboard; `/api/admin/users` gives 403; the cookie is HttpOnly and SameSite=Lax, and
+scripts can't read it; after logout the API gives 401.
+
+### Not tested
+
+- A real email: SMTP is a stand-in everywhere, because no mail account was available.
+- A real Medium or High live alert: recent weather stayed Low, so alerts were tested
+  with stand-in predictions and shown with injected rows.
+- The app running for days: the hourly thread was tested for its schedule and error
+  handling, and each real run did one refresh.
+- Secure cookies over real HTTPS: tested through the test client with an https address.

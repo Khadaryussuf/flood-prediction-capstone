@@ -13,6 +13,7 @@ import { useAuth } from '@/lib/auth'
 import { formatRequestTime } from '@/lib/format'
 import type { AccountStatus, AuditEntry, Role, User } from '@/lib/types'
 import { Field } from './AuthCard'
+import { ThresholdsTab } from './ThresholdsTab'
 
 const STATUS_STYLE: Record<AccountStatus, { label: string; className: string }> = {
   active: { label: 'Active', className: 'bg-risk-low-bg text-risk-low border-risk-low/30' },
@@ -205,9 +206,11 @@ export function SettingsPage() {
       <Tabs defaultValue="users">
         <TabsList>
           <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="thresholds">Thresholds</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
         <TabsContent value="users" className="pt-3"><UsersTab /></TabsContent>
+        <TabsContent value="thresholds" className="pt-3"><ThresholdsTab /></TabsContent>
         <TabsContent value="activity" className="pt-3"><ActivityTab /></TabsContent>
       </Tabs>
     </div>

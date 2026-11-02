@@ -1,9 +1,9 @@
-# Dashboard frontend
+# FloodWatch frontend
 
-The source of the dashboard served by Flask at `/dashboard`. It is built with
-Vite, React, TypeScript, Tailwind CSS and shadcn/ui.
+The source of the FloodWatch web app served by Flask. It is built with Vite, React,
+TypeScript, Tailwind CSS, shadcn/ui, React Router and Leaflet.
 
-You don't need Node to run the dashboard: the built page is committed in
+You don't need Node to run the app: the built page is committed in
 `backend/static/app/`. You need Node 24 or newer only to change it.
 
 ## Commands
@@ -25,18 +25,20 @@ dependencies, also run `npm run third-party`.
 
 ## Screenshots
 
-`scripts/screenshots.mjs` is a development-only visual check. It takes the
-wettest test hour at 360, 768 and 1280 px in both themes, plus a Moderate hour
-at 1280 px in both themes, and fails on horizontal overflow. Images go to the
-git-ignored `screenshots/` folder.
+`scripts/screenshots.mjs` is a development-only visual check. It takes the pages
+you name at 360 and 1280 px in both themes, and fails on horizontal overflow, a
+collapsed map, or a browser console error. Images go to the git-ignored
+`screenshots/` folder.
 
-Each page load stores a prediction, so point Flask at a scratch database. From
-the repo root, in PowerShell:
+Some pages store predictions, so point Flask at a scratch database. From the repo
+root, in PowerShell, with an account in that database:
 
 ```
 $env:DATABASE_URL = "sqlite:///C:/path/to/scratch.db"
 python -m backend.app
 ```
+
+Set `FW_EMAIL` and `FW_PASSWORD` for the account the script should log in with.
 
 Then, in this folder, the first time only:
 
@@ -47,17 +49,21 @@ npx playwright install chromium
 And to take the screenshots:
 
 ```
-node scripts/screenshots.mjs <label>
+node scripts/screenshots.mjs <label> /login /dashboard /alerts
 ```
 
 ## Where things are
 
-- `src/App.tsx`: page state and layout
-- `src/components/dashboard/`: the panels
+- `src/App.tsx`: the routes and who can see them
+- `src/pages/`: one file per screen
+- `src/components/shell/`: sidebar and top bar
+- `src/components/map/`: the Nairobi map
+- `src/components/dashboard/`: risk badge, gauge and the Model evidence panels
 - `src/components/ui/`: components copied from shadcn/ui
 - `src/lib/`: API calls, response types, formatting, computed findings, fixed wording
 - `src/test/`: test setup and real API responses used as fixtures
 
 Numbers on the page come from the Flask API, and the risk class and thresholds
-are never worked out here. The disclaimer is also kept in `src/lib/copy.ts`, so
+are never worked out here. The server enforces who can do what; hiding a link here
+is only a convenience. The disclaimer is also kept in `src/lib/copy.ts`, so
 it still shows when the API can't be reached.
