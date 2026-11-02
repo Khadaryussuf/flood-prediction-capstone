@@ -34,6 +34,20 @@ export interface LiveCurrent {
   forecast: { time: string; precipitation: number }[]
 }
 
+/** GET /api/map/forecast: weather forecast, not model risk */
+export interface MapForecast {
+  available: boolean
+  stale?: boolean
+  label: string
+  times: string[]
+  now_index: number
+  centre: { lat: number; lon: number }
+  peak: { hours: number; mm: number; time: string } | null
+  grid: { lat: number; lon: number; rain: number[] }[]
+  cell: { lat: number; lon: number }
+  zones: { name: string; lat: number; lon: number; rain: number[] }[]
+}
+
 /** One row of GET /api/admin/audit */
 export interface AuditEntry {
   id: number

@@ -46,6 +46,14 @@ try {
         const name = `${path.replace(/\W+/g, '-').replace(/^-|-$/g, '')}-${width}-${theme}`
         const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
         await page.screenshot({ path: fileURLToPath(new URL(`${name}.png`, outDir)), fullPage: true })
+        // A map that collapses or never loads tiles passes every other check
+        const map = page.locator('.leaflet-container')
+        if (await map.count()) {
+          const box = await map.boundingBox()
+          const tiles = await page.locator('.leaflet-tile-loaded').count()
+          console.log(`  map ${Math.round(box.width)}x${Math.round(box.height)}, ${tiles} tiles loaded`)
+          if (box.height < 200) errors.push(`map collapsed to ${box.height}px`)
+        }
         const overflow = scrollWidth > width
         console.log(`${name}: horizontal overflow ${overflow ? `YES (${scrollWidth}px)` : 'none'}, console errors ${errors.length ? errors.join(' | ') : 'none'}`)
         if (overflow || errors.length) process.exitCode = 1

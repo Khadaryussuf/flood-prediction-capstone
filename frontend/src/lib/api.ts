@@ -1,7 +1,7 @@
 // All calls go to the same server that serves the page (Flask), so the
 // paths are relative to the site root. In `npm run dev`, Vite forwards
 // them to Flask (see vite.config.ts).
-import type { Comparison, Health, LiveCurrent, Meta, Prediction, Reading, ReplayWindow, StoredPrediction } from './types'
+import type { Comparison, Health, LiveCurrent, MapForecast, Meta, Prediction, Reading, ReplayWindow, StoredPrediction } from './types'
 
 /** The session's CSRF token, sent on every request that changes something. */
 let csrfToken = ''
@@ -50,6 +50,8 @@ export const getHealth = () => request<Health>('/health')
 export const getMeta = () => request<Meta>('/api/meta')
 
 export const getLive = () => request<LiveCurrent>('/api/live/current')
+
+export const getMapForecast = () => request<MapForecast>('/api/map/forecast')
 
 export const getReplay = (index: number) => request<ReplayWindow>(`/api/replay/${index}`)
 

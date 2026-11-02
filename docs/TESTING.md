@@ -349,3 +349,25 @@ weren't scanned until committed. It now also covers untracked files that aren't
 ignored. It then reported two false positives, both fixed at the source: the blank
 `SECRET_KEY=` line in `.env.example` (the pattern ran across lines) and a literal bad
 CSRF value in a test (now random).
+## Map
+
+Added in Module 3, in `tests/test_map.py` (M1-M12, forecast API stubbed) and
+`frontend/src/components/map/RiskMap.test.tsx` (9 tests, Leaflet stubbed). Run
+recorded: 2026-11-02. All PASSED. These cover the session requirement, past 24 and
+next 12 hours from one multi-location call, the forecast label and no model risk in
+the payload, peak selection (future hours only, none below 0.1 mm), caching, the
+last good copy on failure, malformed responses, slider, layer toggles, and
+attribution.
+
+Checked by eye on the real map, at 360 and 1280 px in both themes, plus a past hour
+with rain (grid total 16.2 mm, with 7 distinct values across 25 squares). Issues found
+this way, which the automated checks had passed:
+
+| Issue | How it was found | Corrective action |
+|-------|------------------|-------------------|
+| Map collapsed to zero height at 360 px | Reading the screenshot | `flex-1` overrode the fixed height in a column layout; now only applies on wide screens. The screenshot script now fails if the map is under 200 px tall |
+| Zone labels overlapped and hid the model-risk marker | Reading the screenshot | Each label goes its own way, and the marker sits beside the cell's centre, on top |
+
+Also found before testing: the app's `same-origin` referrer policy could have blocked
+OpenStreetMap tiles, which need a referrer. Now `strict-origin-when-cross-origin` (M11).
+Tiles load in all four views.

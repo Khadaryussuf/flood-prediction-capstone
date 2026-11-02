@@ -3,6 +3,7 @@ import { AlertTriangle, Clock, Droplets, Gauge, Thermometer, Waves, Wind, type L
 import { Bar, BarChart, CartesianGrid, ReferenceLine, XAxis, YAxis } from 'recharts'
 
 import { riskStyle } from '@/components/dashboard/risk'
+import { RiskMap } from '@/components/map/RiskMap'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -201,6 +202,7 @@ export function DashboardPage() {
           <RiskBanner live={live} />
           <FreshnessChip live={live} />
           <Readings live={live} />
+          <RiskMap live={live} />
           <RainChart live={live} />
           <p className="text-xs text-muted-foreground">
             {live.source_note} Weather data by{' '}

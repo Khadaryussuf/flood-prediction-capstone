@@ -35,7 +35,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from tensorflow import keras
 
-from backend import auth, live, scheduler, security, thresholds as limits
+from backend import auth, live, map_data, scheduler, security, thresholds as limits
 from backend.db import DEFAULT_DATABASE_URL, Prediction, make_engine  # noqa: F401
 from backend.env import load_env
 from pipeline import config
@@ -210,6 +210,7 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
     app.config["PREDICT_MM"] = predict_mm
     app.config["PREDICT_MANY"] = predict_many
     app.register_blueprint(live.bp)
+    app.register_blueprint(map_data.bp)
 
     @app.get("/health")
     def health():

@@ -151,7 +151,8 @@ def admin_required(view):
 def add_security_headers(response):
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
-    response.headers.setdefault("Referrer-Policy", "same-origin")
+    # Map tile servers need to see the site's origin, but never the path
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     if request.path.startswith("/api/") or request.path == "/predictions":
         response.headers.setdefault("Cache-Control", "no-store")
     return response

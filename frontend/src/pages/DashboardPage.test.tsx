@@ -31,6 +31,9 @@ const live = (overrides: Partial<LiveCurrent> = {}): LiveCurrent => ({
   ...overrides,
 })
 
+// The map has its own tests, and Leaflet needs real browser layout
+vi.mock('@/components/map/RiskMap', () => ({ RiskMap: () => <div data-testid="risk-map" /> }))
+
 function renderWith(body: LiveCurrent | Error) {
   vi.stubGlobal('fetch', vi.fn(async () => {
     if (body instanceof Error) throw body
@@ -76,6 +79,7 @@ describe('DashboardPage', () => {
     expect(rows[1]).toHaveTextContent('2.4 mm')
     expect(screen.getByRole('link', { name: 'Open-Meteo' })).toBeInTheDocument()
     expect(screen.getByText(/differ from the ERA5/)).toBeInTheDocument()
+    expect(screen.getByTestId('risk-map')).toBeInTheDocument()
   })
 
   it('says it is waiting when there is no reading yet, instead of showing a false Low', async () => {
