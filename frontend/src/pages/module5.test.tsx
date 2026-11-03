@@ -136,6 +136,14 @@ describe('ThresholdsTab', () => {
     expect(screen.getByRole('button', { name: 'Reset to defaults' })).toBeEnabled()
   })
 
+  it('accepts limits finer than 0.1 mm, such as 0.01', async () => {
+    serve()
+    render(<ThresholdsTab />)
+    // A step of 0.1 made browsers refuse 0.01 or 2.55 and silently block Save
+    expect(await screen.findByLabelText('Medium from (mm/h)')).toHaveAttribute('step', 'any')
+    expect(screen.getByLabelText('High from (mm/h)')).toHaveAttribute('step', 'any')
+  })
+
   it('words the preview correctly', () => {
     expect(previewLine({ ...preview, alerts: 1 })).toBe('Last 30 days would have raised 1 alert.')
     expect(previewLine({ ...preview, alerts: 0 })).toBe('Last 30 days would have raised 0 alerts.')

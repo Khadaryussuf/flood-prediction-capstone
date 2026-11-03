@@ -104,8 +104,8 @@ export function ThresholdsTab() {
         {settings && (
           <form onSubmit={save} className="flex flex-col gap-4">
             <div className="grid gap-4 md:grid-cols-3">
-              <Field label="Medium from (mm/h)" id="medium-from" type="number" step="0.1" min="0" required value={form.medium_from} onChange={set('medium_from')} />
-              <Field label="High from (mm/h)" id="high-from" type="number" step="0.1" min="0" required value={form.high_from} onChange={set('high_from')} />
+              <Field label="Medium from (mm/h)" id="medium-from" type="number" step="any" min="0" required value={form.medium_from} onChange={set('medium_from')} />
+              <Field label="High from (mm/h)" id="high-from" type="number" step="any" min="0" required value={form.high_from} onChange={set('high_from')} />
               <Field label="Alert cool-down (hours)" id="cooldown" type="number" step="1" min="0" max="48" required value={form.cooldown_hours} onChange={set('cooldown_hours')} />
             </div>
 

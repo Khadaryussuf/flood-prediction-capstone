@@ -469,3 +469,20 @@ scripts can't read it; after logout the API gives 401.
 - The app running for days: the hourly thread was tested for its schedule and error
   handling, and each real run did one refresh.
 - Secure cookies over real HTTPS: tested through the test client with an https address.
+## Live alert, end to end
+
+Run on 2026-11-03 on a scratch database with one administrator and one responder,
+both with throwaway passwords, and no SMTP settings. The administrator set Medium to
+start at 0.01 mm in Settings and triggered the manual refresh
+(`POST /api/admin/live/refresh`). The real live prediction was 0.221 mm, so Medium.
+
+Result: one alert, with a row for each of the two accounts. Both rows said "not sent:
+email not configured". The Dashboard showed the alert banner and a Medium risk banner
+noting the limits were set by an administrator. Each bell showed 1 unread. The responder
+acknowledged their own row in the Alerts page, and their bell went to none. They had no
+Acknowledge button on the administrator's row, and the administrator's count stayed at
+1. Resetting restored 2.5 and 7.6 mm. `data/predictions.db` was unchanged.
+
+| Issue | How it was found | Corrective action |
+|-------|------------------|-------------------|
+| Settings couldn't save a limit finer than 0.1 mm. The fields had `step="0.1"`, so the browser blocked 0.01 or 2.55 and Save did nothing | This run's first attempt stopped at Save. A browser check confirmed the message "The two nearest valid values are 0 and 0.1" | Both mm fields now use `step="any"`, with a Vitest test for it. Vitest's jsdom doesn't enforce `step`, which is why the earlier tests passed |
