@@ -7,6 +7,13 @@ from backend.db import AppSetting, utcnow
 from pipeline import config
 
 THRESHOLDS_KEY = "thresholds"
+
+# The caveat shown wherever risk is shown. The frontend has the same two strings
+# in src/lib/copy.ts, and tests check they match.
+DISCLAIMER = ("Risk level is hourly rainfall intensity (AMS classes), not flood "
+              "probability, and is not calibrated to Nairobi flood records.")
+DISCLAIMER_OVERRIDDEN = ("Risk level is hourly rainfall intensity (administrator-set limits), "
+                         "not flood probability, and is not calibrated to Nairobi flood records.")
 COOLDOWN_KEY = "alert_cooldown_hours"
 DEFAULT_COOLDOWN_HOURS = 3
 
@@ -43,6 +50,11 @@ def current_thresholds(session):
 
 def is_overridden(session):
     return get_setting(session, THRESHOLDS_KEY) is not None
+
+
+def disclaimer(session):
+    """The disclaimer for the limits in use: AMS classes, or an administrator's."""
+    return DISCLAIMER_OVERRIDDEN if is_overridden(session) else DISCLAIMER
 
 
 def classify(predicted_mm, thresholds=None):

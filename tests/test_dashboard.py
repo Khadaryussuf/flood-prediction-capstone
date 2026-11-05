@@ -202,6 +202,7 @@ def test_built_dashboard_contains_disclaimer(client):
             bundle += response.get_data(as_text=True)
             response.close()
     assert backend_app.DISCLAIMER in bundle
+    assert backend_app.DISCLAIMER_OVERRIDDEN in bundle
     assert backend_app.REPLAY_LABEL in bundle
 
 

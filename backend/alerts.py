@@ -28,8 +28,7 @@ BANNER_HOURS = 6  # how long the Dashboard mentions an alert
 LEVEL_RANK = {"low": 0, "moderate": 1, "high": 2}
 LEVEL_LABEL = {"low": "Low", "moderate": "Medium", "high": "High"}
 NAIROBI_OFFSET = timedelta(hours=3)
-DISCLAIMER = ("Risk level is hourly rainfall intensity (AMS classes), not flood probability, "
-              "and is not calibrated to Nairobi flood records.")
+DISCLAIMER = limits.DISCLAIMER
 
 
 def smtp_settings():
@@ -42,7 +41,14 @@ def smtp_settings():
             "user": os.environ.get("SMTP_USER"), "password": os.environ.get("SMTP_PASSWORD")}
 
 
-def send_email(settings, recipient, level, predicted_mm, target_time):
+def hour_range(target_time):
+    """The predicted hour in words: "between 21:00 and 22:00 on 03 Nov 2026".
+    target_time is the end of the hour, as Open-Meteo's hourly rainfall is."""
+    start = target_time - timedelta(hours=1)
+    return f"between {start:%H:%M} and {target_time:%H:%M} on {start:%d %b %Y}"
+
+
+def send_email(settings, recipient, level, predicted_mm, target_time, disclaimer=DISCLAIMER):
     """Send one alert. Returns a delivery status; never raises and never includes
     server responses or credentials in the status."""
     if settings is None:
@@ -53,9 +59,9 @@ def send_email(settings, recipient, level, predicted_mm, target_time):
     message["From"] = settings["sender"]
     message["To"] = recipient
     message.set_content(
-        f"FloodWatch predicts {predicted_mm:.2f} mm of rain in the hour to "
-        f"{target_time:%d %b %Y, %H:%M} (Nairobi time). Risk level: {label}.\n\n"
-        f"Log in to FloodWatch to see details and acknowledge this alert.\n\n{DISCLAIMER}\n"
+        f"FloodWatch predicts {predicted_mm:.2f} mm of rain {hour_range(target_time)} "
+        f"(Nairobi time). Risk level: {label}.\n\n"
+        f"Log in to FloodWatch to see details and acknowledge this alert.\n\n{disclaimer}\n"
     )
     try:
         client_class = smtplib.SMTP_SSL if settings["port"] == 465 else smtplib.SMTP
@@ -95,8 +101,9 @@ def process_prediction(engine, level, predicted_mm, target_time):
         session.flush()
         recipients = session.scalars(select(User).where(User.status == STATUS_ACTIVE).order_by(User.id)).all()
         settings = smtp_settings()
+        caveat = limits.disclaimer(session)
         for user in recipients:
-            status = send_email(settings, user.email, level, predicted_mm, target_time)
+            status = send_email(settings, user.email, level, predicted_mm, target_time, caveat)
             session.add(AlertDelivery(event_id=event.id, user_id=user.id, recipient_email=user.email,
                                       recipient_name=user.name, delivery_status=status))
         session.commit()

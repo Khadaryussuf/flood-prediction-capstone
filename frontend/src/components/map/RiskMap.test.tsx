@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { peakLine, rainColour, riskMarkerHtml, RiskMap, timeLabel } from './RiskMap'
+import { MARKER_ANCHOR, peakLine, rainColour, riskMarkerHtml, RiskMap, timeLabel } from './RiskMap'
 import type { LiveCurrent, MapForecast } from '@/lib/types'
 
 // Leaflet needs real browser layout, so these stand in for its components.
@@ -12,7 +12,9 @@ vi.mock('react-leaflet', () => ({
   MapContainer: ({ children }: { children: ReactNode }) => <div data-testid="map">{children}</div>,
   TileLayer: ({ attribution }: { attribution: string }) => <div data-testid="tiles">{attribution}</div>,
   Rectangle: ({ pathOptions }: { pathOptions: { fillColor: string } }) => <div data-testid="cell" data-colour={pathOptions.fillColor} />,
-  CircleMarker: ({ children }: { children: ReactNode }) => <div data-testid="zone">{children}</div>,
+  // The zones have labels; the grid cell's centre dot is the one that isn't interactive
+  CircleMarker: ({ children, interactive }: { children?: ReactNode; interactive?: boolean }) =>
+    <div data-testid={interactive === false ? 'centre-dot' : 'zone'}>{children}</div>,
   Tooltip: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Marker: () => <div data-testid="risk-marker" />,
 }))
@@ -86,6 +88,13 @@ describe('RiskMap', () => {
     await user.click(screen.getByRole('checkbox', { name: 'Forecast rainfall grid' }))
     expect(screen.queryByTestId('cell')).not.toBeInTheDocument()
     expect(screen.getByTestId('risk-marker')).toBeInTheDocument()
+    expect(screen.getByTestId('centre-dot')).toBeInTheDocument()
+  })
+
+  it('places the risk pill below and right of the cell centre, clear of CBD to its north-west', () => {
+    // Leaflet anchors are negated: negative x and y put the pill right of and below the point
+    expect(MARKER_ANCHOR[0]).toBeLessThan(0)
+    expect(MARKER_ANCHOR[1]).toBeLessThan(0)
   })
 
   it('states the peak, or that no rain is forecast', async () => {

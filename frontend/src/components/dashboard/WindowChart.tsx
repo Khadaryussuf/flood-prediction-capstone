@@ -13,7 +13,7 @@ import { riskStyle } from './risk'
 const OTHER_FEATURES: { key: Feature; tab: string; label: string; unit: string }[] = [
   { key: 'temperature_2m', tab: 'Temp', label: 'Temperature', unit: '°C' },
   { key: 'relative_humidity_2m', tab: 'Humidity', label: 'Relative humidity', unit: '%' },
-  { key: 'surface_pressure', tab: 'Pressure', label: 'Surface pressure', unit: 'hPa' },
+  { key: 'surface_pressure', tab: 'Pressure', label: 'Station pressure', unit: 'hPa' },
   { key: 'wind_speed_10m', tab: 'Wind', label: 'Wind speed', unit: 'km/h' },
 ]
 

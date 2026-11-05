@@ -70,6 +70,7 @@ describe('DashboardPage', () => {
     expect(screen.getByTestId('reading-temperature_2m')).toHaveTextContent('21.3 °C')
     expect(screen.getByTestId('reading-relative_humidity_2m')).toHaveTextContent('74 %')
     expect(screen.getByTestId('reading-surface_pressure')).toHaveTextContent('838 hPa')
+    expect(screen.getByText('Station pressure')).toBeInTheDocument()
     expect(screen.getByTestId('reading-wind_speed_10m')).toHaveTextContent('12 km/h')
   })
 
@@ -93,6 +94,13 @@ describe('DashboardPage', () => {
   it('says so when the server cannot be reached', async () => {
     renderWith(new TypeError('Failed to fetch'))
     expect(await screen.findByRole('alert')).toHaveTextContent("Can't reach the FloodWatch server")
+  })
+
+  it('names the predicted hour as a range, not "Next hour, to"', async () => {
+    renderWith(live())
+    const banner = await screen.findByTestId('risk-banner')
+    expect(banner).toHaveTextContent('Rainfall predicted for 15:00 to 16:00, 2 Nov 2026 (Nairobi time).')
+    expect(banner).not.toHaveTextContent('Next hour, to')
   })
 
   it('notes when an administrator has set the limits', () => {

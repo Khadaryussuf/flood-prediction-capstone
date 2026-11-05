@@ -15,7 +15,8 @@ interface AuthState {
   logout: () => Promise<void>
 }
 
-const AuthContext = createContext<AuthState>({
+// oxlint-disable-next-line react/only-export-components
+export const AuthContext = createContext<AuthState>({
   user: null,
   loading: true,
   login: async () => {},

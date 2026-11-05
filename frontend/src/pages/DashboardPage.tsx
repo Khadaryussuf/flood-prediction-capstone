@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getLive } from '@/lib/api'
-import { formatClock, formatHour, formatMm } from '@/lib/format'
+import { formatClock, formatHour, formatHourRange, formatMm } from '@/lib/format'
 import type { Feature, Freshness, LiveCurrent } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -41,7 +41,7 @@ const CARDS: { key: Feature; label: string; unit: string; Icon: LucideIcon; deci
   { key: 'precipitation', label: 'Rainfall', unit: 'mm', Icon: Droplets, decimals: 1 },
   { key: 'temperature_2m', label: 'Temperature', unit: '°C', Icon: Thermometer, decimals: 1 },
   { key: 'relative_humidity_2m', label: 'Humidity', unit: '%', Icon: Waves, decimals: 0 },
-  { key: 'surface_pressure', label: 'Pressure', unit: 'hPa', Icon: Gauge, decimals: 0 },
+  { key: 'surface_pressure', label: 'Station pressure', unit: 'hPa', Icon: Gauge, decimals: 0 },
   { key: 'wind_speed_10m', label: 'Wind', unit: 'km/h', Icon: Wind, decimals: 0 },
 ]
 
@@ -72,7 +72,8 @@ function RiskBanner({ live }: { live: LiveCurrent }) {
       </div>
       <p className="text-lg font-medium" data-testid="action-line">{ACTIONS[level]}</p>
       <p className="text-sm">
-        Next hour, to {live.target_time && formatHour(live.target_time)}. {thresholdNote(live)}
+        {live.target_time && <>Rainfall predicted for {formatHourRange(live.target_time)} (Nairobi time). </>}
+        {thresholdNote(live)}
       </p>
     </section>
   )

@@ -176,3 +176,22 @@ def test_preview_only_looks_back_30_days(app, admin):
                       json={"medium_from": 2.5, "high_from": 7.6, "cooldown_hours": 3}).get_json()
     assert body["hours_checked"] == 1 and body["alerts"] == 0
     assert history.PREVIEW_DAYS == 30
+
+
+# H17: the disclaimer names whose limits are in use
+def test_disclaimer_follows_an_override(admin, client):
+    from backend import thresholds as limits
+    assert client.get("/api/disclaimer").get_json() == {
+        "disclaimer": limits.DISCLAIMER, "thresholds_overridden": False}
+    admin.put("/api/admin/thresholds", json=SETTINGS)
+    body = client.get("/api/disclaimer").get_json()
+    assert body["thresholds_overridden"] is True
+    assert "administrator-set limits" in body["disclaimer"] and "AMS" not in body["disclaimer"]
+    assert admin.get("/api/meta").get_json()["disclaimer"] == limits.DISCLAIMER_OVERRIDDEN
+    admin.delete("/api/admin/thresholds")
+    assert client.get("/api/disclaimer").get_json()["disclaimer"] == limits.DISCLAIMER
+
+
+# H18: like every new route, it needs a session
+def test_disclaimer_route_needs_a_session(anon):
+    assert anon.get("/api/disclaimer").status_code == 401

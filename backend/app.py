@@ -10,6 +10,7 @@ Endpoints:
   POST /predict              - predict next-hour rainfall from the last 24 hours
   GET  /predictions          - the 20 most recent stored predictions
   GET  /dashboard            - the dashboard page (built from frontend/)
+  GET  /api/disclaimer       - the disclaimer for the limits in use
   GET  /api/meta             - thresholds, disclaimer and replay period for the dashboard
   GET  /api/replay/<index>   - one 24-hour window from the held-out test split
   GET  /api/comparison       - model comparison and seed results, read from docs/
@@ -42,9 +43,9 @@ from pipeline import config
 from pipeline.evaluate import to_mm
 from pipeline.preprocess import chronological_split, load_hourly
 
-# Shown on every dashboard view
-DISCLAIMER = ("Risk level is hourly rainfall intensity (AMS classes), not flood "
-              "probability, and is not calibrated to Nairobi flood records.")
+# Shown on every dashboard view; the second when an administrator has set the limits
+DISCLAIMER = limits.DISCLAIMER
+DISCLAIMER_OVERRIDDEN = limits.DISCLAIMER_OVERRIDDEN
 REPLAY_LABEL = "Replay of held-out test period (not live)"
 
 # The built dashboard (npm run build in frontend/ writes here)
@@ -304,17 +305,25 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
             return response
         return jsonify({"error": "Not found"}), 404
 
+    @app.get("/api/disclaimer")
+    def current_disclaimer():
+        """The disclaimer for the limits in use, for the strip on every page."""
+        with Session(engine) as session:
+            return jsonify({"disclaimer": limits.disclaimer(session),
+                            "thresholds_overridden": limits.is_overridden(session)})
+
     @app.get("/api/meta")
     def meta():
         with Session(engine) as session:
             active_thresholds = limits.current_thresholds(session)
+            disclaimer = limits.disclaimer(session)
         test = replay_split()
         window_count = len(test) - config.WINDOW
         # Target hour i is row i + WINDOW, the same pairing as make_windows
         targets = test[config.TARGET].iloc[config.WINDOW:].reset_index(drop=True)
         wettest = targets.sort_values(ascending=False, kind="stable").head(WETTEST_COUNT)
         return jsonify({
-            "disclaimer": DISCLAIMER,
+            "disclaimer": disclaimer,
             "data_label": REPLAY_LABEL,
             "timezone": config.TIMEZONE,
             "thresholds": limits.thresholds_payload(active_thresholds),

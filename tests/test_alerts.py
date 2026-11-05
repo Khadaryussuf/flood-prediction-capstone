@@ -309,3 +309,17 @@ def test_responders_and_admins_both_get_rows(engine, make_user):
     make_user(role=ROLE_ADMIN)
     raise_alert(engine)
     assert len(deliveries(engine)) == 2
+
+
+# A24: an alert email names the hour as a range, and whose limits raised it
+def test_email_names_the_hour_and_the_limits_in_use(engine, make_user, smtp):
+    from backend import thresholds as limits
+    make_user()
+    with Session(engine) as session:
+        limits.set_setting(session, limits.THRESHOLDS_KEY, [[1.0, "low"], [5.0, "moderate"]])
+        session.commit()
+    raise_alert(engine, "moderate", 2.0)
+    body = smtp.sent[0].get_content()
+    start = TARGET - timedelta(hours=1)
+    assert f"between {start:%H:%M} and {TARGET:%H:%M} on {start:%d %b %Y}" in body
+    assert limits.DISCLAIMER_OVERRIDDEN in body and "AMS" not in body

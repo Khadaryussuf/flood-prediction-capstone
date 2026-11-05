@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton'
 import { ApiError, postJson, request } from '@/lib/api'
 import { formatMm } from '@/lib/format'
+import { THRESHOLDS_CHANGED } from '@/lib/copy'
 import type { ThresholdPreview, ThresholdSettings } from '@/lib/types'
 import { Field } from './AuthCard'
 
@@ -67,6 +68,7 @@ export function ThresholdsTab() {
     try {
       show(await postJson<ThresholdSettings>('/api/admin/thresholds', values(), 'PUT'))
       setSaved('Saved. New predictions use these limits.')
+      window.dispatchEvent(new Event(THRESHOLDS_CHANGED))
     } catch (reason) {
       setError(errorText(reason))
     }
@@ -78,6 +80,7 @@ export function ThresholdsTab() {
     try {
       show(await request<ThresholdSettings>('/api/admin/thresholds', { method: 'DELETE' }))
       setSaved('Back to the defaults.')
+      window.dispatchEvent(new Event(THRESHOLDS_CHANGED))
     } catch (reason) {
       setError(errorText(reason))
     }

@@ -27,6 +27,9 @@ const RAIN_SCALE: { from: number; colour: string; label: string }[] = [
 const ZONE_LABEL_SIDE: Record<string, 'top' | 'bottom' | 'left'> = { Mathare: 'top', CBD: 'left', Kibera: 'bottom' }
 const ZONE_LABEL_OFFSET: Record<string, [number, number]> = { top: [0, -6], bottom: [0, 6], left: [-6, 0] }
 
+/** Pixels from the cell's centre to the pill's top-left corner, negated as Leaflet wants */
+export const MARKER_ANCHOR: [number, number] = [-12, -12]
+
 export function rainColour(mm: number): string | null {
   return RAIN_SCALE.find((band) => mm >= band.from)?.colour ?? null
 }
@@ -61,8 +64,9 @@ function MapBody({ forecast, live }: { forecast: MapForecast; live: LiveCurrent 
     className: '',
     html: riskMarkerHtml(live.risk_level ?? '', live.predicted_mm ?? 0),
     iconSize: [130, 26],
-    // Sits just to the right of the cell's centre, clear of the zone labels
-    iconAnchor: [-6, 13],
+    // Below and to the right of the cell's centre. CBD sits just north-west of
+    // it, so a pill centred on the cell ran into CBD's dot (round 2 click-through)
+    iconAnchor: MARKER_ANCHOR,
   }), [live.risk_level, live.predicted_mm])
 
   const lastIndex = forecast.times.length - 1
@@ -104,6 +108,9 @@ function MapBody({ forecast, live }: { forecast: MapForecast; live: LiveCurrent 
                 </Tooltip>
               </CircleMarker>
             ))}
+            {/* The grid cell's centre: the pill beside it is offset so it doesn't cover CBD */}
+            <CircleMarker center={[forecast.centre.lat, forecast.centre.lon]} radius={4} interactive={false}
+              pathOptions={{ color: '#0f1b2a', weight: 2, fillColor: riskStyle(live.risk_level ?? '').solid, fillOpacity: 1 }} />
             <Marker position={[forecast.centre.lat, forecast.centre.lon]} icon={icon} keyboard={false} zIndexOffset={1000}
               title="Model risk for this one grid cell" />
           </MapContainer>

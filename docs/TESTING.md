@@ -501,3 +501,19 @@ was its own commit, and each passed pytest, Vitest and the build before it.
 | S38 | Unknown `/api/` address | JSON 404 with a session, 401 without; a non-browser request to an unknown page still gets 401 | As expected. PASSED | None |
 | Vitest | Responder on `/settings` | "You don't have access", no Settings link, a link to the Dashboard, and no `/api/admin` request made | As expected. PASSED | None |
 | Vitest | Unknown address, logged in / logged out | "Page not found" inside the app shell / the login page | As expected. PASSED | None |
+
+### Item 2: polish
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| H17 | Disclaimer after an override | `/api/disclaimer` and `/api/meta` say "administrator-set limits" and not "AMS"; reset brings the AMS wording back | As expected. PASSED | None |
+| H18 | `/api/disclaimer` with no session | 401 | As expected. PASSED | None |
+| A24 | Alert email under an override | Names the hour as "between 21:00 and 22:00 on …" and carries the administrator-set disclaimer | As expected. PASSED | None |
+| T37 (extended) | Built page | Contains both disclaimers exactly as the backend has them | As expected. PASSED | None |
+| Vitest | Disclaimer strip | AMS wording by default; administrator wording when overridden; changes as soon as limits are saved or reset; no request before login; default wording when the server is down | As expected. PASSED | None |
+| Vitest | Risk banner wording | "Rainfall predicted for 15:00 to 16:00, 2 Nov 2026 (Nairobi time)", never "Next hour, to"; an hour ending at midnight is dated by its start | As expected. PASSED | None |
+| Vitest | Readings | The pressure card says "Station pressure" | As expected. PASSED | None |
+| Vitest / screenshot | Map | The risk pill sits below and right of the grid cell's centre, with a dot marking the centre; at 360 and 1280 px in both themes it no longer touches CBD's dot or label | As expected. PASSED | Before: the pill's left end covered CBD's dot (screenshot at 360 px) |
+
+The pressure chart's tab stays "Pressure" so the five tabs still fit at 360 px; its
+heading says "Station pressure".

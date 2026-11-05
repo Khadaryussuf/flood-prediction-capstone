@@ -49,6 +49,9 @@ export const getHealth = () => request<Health>('/health')
 
 export const getMeta = () => request<Meta>('/api/meta')
 
+export const getDisclaimer = () =>
+  request<{ disclaimer: string; thresholds_overridden: boolean }>('/api/disclaimer')
+
 export const getAlerts = (search = '') =>
   request<AlertRow[]>(search ? `/api/alerts?q=${encodeURIComponent(search)}` : '/api/alerts')
 

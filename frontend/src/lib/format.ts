@@ -16,6 +16,17 @@ export function formatHour(iso: string): string {
   return `${day} ${MONTHS[month - 1]} ${year}, ${hhmm}`
 }
 
+/** The hour that ends at `iso`, as Open-Meteo's hourly rainfall does:
+ *  "21:00 to 22:00, 3 Nov 2026" (the date is the hour's start) */
+export function formatHourRange(iso: string): string {
+  const { year, month, day, hhmm } = parts(iso)
+  const [hours, minutes] = hhmm.split(':').map(Number)
+  const start = new Date(Date.UTC(year, month - 1, day, hours - 1, minutes))
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const startText = `${pad(start.getUTCHours())}:${pad(start.getUTCMinutes())}`
+  return `${startText} to ${hhmm}, ${start.getUTCDate()} ${MONTHS[start.getUTCMonth()]} ${start.getUTCFullYear()}`
+}
+
 /** "3 Apr 2025" */
 export function formatDay(iso: string): string {
   const { year, month, day } = parts(iso)
