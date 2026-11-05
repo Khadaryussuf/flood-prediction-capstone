@@ -133,6 +133,12 @@ def refresh(app):
         save_history(session, target_time, predicted_mm, level, "live")
         session.commit()
         snapshot_id = snapshot.id
+    # Hours missed while the computer slept or the server was off. A problem here
+    # mustn't lose the reading either
+    try:
+        fill_gaps(app, target_time)
+    except Exception:
+        log.exception("Filling missed hours failed")
     # A problem with alerting mustn't lose the reading
     try:
         alerts.process_prediction(engine, level, predicted_mm, target_time)
@@ -166,6 +172,54 @@ def backfill_if_empty(app):
                 source="backfill", created_at=db.utcnow()))
         session.commit()
     return len(windows)
+
+
+def missing_hours(session, target_time):
+    """Hours with no prediction between the first stored hour (or BACKFILL_DAYS
+    back, if later) and target_time, oldest first."""
+    earliest = target_time - timedelta(days=BACKFILL_DAYS)
+    stored = set(session.scalars(select(RiskHistory.target_time).where(
+        RiskHistory.target_time >= earliest, RiskHistory.target_time < target_time)))
+    if not stored:
+        return []  # nothing to measure a gap from; backfill_if_empty fills a new database
+    hour, missing = min(stored), []
+    while hour < target_time:
+        if hour not in stored:
+            missing.append(hour)
+        hour += timedelta(hours=1)
+    return missing
+
+
+def fill_gaps(app, target_time):
+    """Predict the hours the hourly run missed, from the forecast API's past data,
+    on the same path as backfill_if_empty. Marked "backfill", so they never raise
+    alerts: those hours are already over. Returns how many hours were filled."""
+    engine = app.config["DB_ENGINE"]
+    with Session(engine) as session:
+        missing = missing_hours(session, target_time)
+    if not missing:
+        return 0
+    hours_back = int((target_time - missing[0]) / timedelta(hours=1)) + config.WINDOW + 1
+    frame = hourly_frame(fetch({**base_params(), "past_hours": hours_back, "forecast_hours": 1}))
+    windows, targets = [], []
+    for hour in missing:
+        window = frame[(frame.index >= hour - timedelta(hours=config.WINDOW)) & (frame.index < hour)]
+        if len(window) == config.WINDOW and not window[config.FEATURES].isna().any(axis=None):
+            windows.append(window[config.FEATURES])
+            targets.append(hour)
+    if not windows:
+        return 0
+    predictions = app.config["PREDICT_MANY"](windows)
+    with Session(engine) as session:
+        thresholds = limits.current_thresholds(session)
+        for hour, mm in zip(targets, predictions):
+            if session.scalar(select(RiskHistory).where(RiskHistory.target_time == hour)) is None:
+                session.add(RiskHistory(target_time=hour, predicted_mm=mm,
+                                        risk_level=limits.classify(mm, thresholds),
+                                        source="backfill", created_at=db.utcnow()))
+        session.commit()
+    log.info("Filled %d missed hours", len(targets))
+    return len(targets)
 
 
 def freshness(snapshot, last_attempt_ok):

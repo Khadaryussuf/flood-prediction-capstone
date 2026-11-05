@@ -234,3 +234,89 @@ def test_manual_refresh_is_admin_only(client, admin, real_window, monkeypatch, n
     assert admin.post("/api/admin/live/refresh").get_json() == {"ok": True}
     stub_api(monkeypatch, requests.ConnectionError())
     assert admin.post("/api/admin/live/refresh").status_code == 502
+
+
+# ---- Round 2: hours missed while asleep or switched off --------------------
+
+def long_payload(real_window, hours_before=60):
+    """Like fake_payload, but with `hours_before` past hours so missed hours can be filled."""
+    current = NOW.replace(minute=0)
+    times = [current + timedelta(hours=h) for h in range(-hours_before, 14)]
+    rows = (list(real_window) * 10)[:len(times)]
+    hourly = {"time": [t.strftime("%Y-%m-%dT%H:%M") for t in times]}
+    for feature in config.FEATURES:
+        hourly[feature] = [row[feature] for row in rows]
+    return {"current": {"time": NOW.strftime("%Y-%m-%dT%H:%M")}, "hourly": hourly}
+
+
+TARGET = datetime(2026, 11, 2, 16)  # the live target for NOW
+
+
+def store_hours(app, hours, source="live"):
+    with Session(app.config["DB_ENGINE"]) as session:
+        for hour in hours:
+            session.add(RiskHistory(target_time=hour, predicted_mm=0.0, risk_level="low",
+                                    source=source, created_at=db.utcnow()))
+        session.commit()
+
+
+def history(app):
+    with Session(app.config["DB_ENGINE"]) as session:
+        return {row.target_time: row.source for row in session.scalars(select(RiskHistory))}
+
+
+# L17: the gap seen on 3 Nov (two missed hours) is filled on the next run
+def test_next_run_fills_missed_hours(app, real_window, monkeypatch, no_backfill):
+    from backend.db import AlertEvent
+    hour = timedelta(hours=1)
+    store_hours(app, [TARGET - 5 * hour, TARGET - 4 * hour, TARGET - hour])  # missed -3 h and -2 h
+    seen = []
+    real_many = app.config["PREDICT_MANY"]
+    app.config["PREDICT_MANY"] = lambda frames: (seen.extend(f.index[-1] for f in frames), real_many(frames))[1]
+    calls = stub_api(monkeypatch, long_payload(real_window))
+    assert live.refresh(app) is not None
+    rows = history(app)
+    assert rows[TARGET - 3 * hour] == rows[TARGET - 2 * hour] == "backfill"
+    assert rows[TARGET] == "live" and len(rows) == 6
+    # Each filled hour is predicted from the 24 hours before it, as everywhere else
+    assert [t.to_pydatetime() for t in seen] == [TARGET - 4 * hour, TARGET - 3 * hour]
+    assert calls[1]["past_hours"] >= 3 + config.WINDOW
+    # Hours that are already over never raise alerts
+    with Session(app.config["DB_ENGINE"]) as session:
+        assert session.scalars(select(AlertEvent)).all() == []
+
+
+# L18: no gap, no extra call
+def test_no_gap_means_no_extra_fetch(app, real_window, monkeypatch, no_backfill):
+    store_hours(app, [TARGET - timedelta(hours=2), TARGET - timedelta(hours=1)])
+    calls = stub_api(monkeypatch, long_payload(real_window))
+    live.refresh(app)
+    assert len(calls) == 1
+
+
+# L19: a failure while filling doesn't lose the live reading
+def test_failed_gap_fill_keeps_the_live_reading(app, real_window, monkeypatch, no_backfill):
+    store_hours(app, [TARGET - timedelta(hours=6)])
+    stub_api(monkeypatch, long_payload(real_window), requests.ConnectionError("down"))
+    assert live.refresh(app) is not None
+    assert history(app)[TARGET] == "live"
+
+
+# L20: gaps older than the backfill period are left alone
+def test_gaps_older_than_the_backfill_period_are_ignored(app, real_window, monkeypatch, no_backfill):
+    old = TARGET - timedelta(days=live.BACKFILL_DAYS, hours=5)
+    store_hours(app, [old])
+    calls = stub_api(monkeypatch, long_payload(real_window))
+    live.refresh(app)
+    assert len(calls) == 1 and set(history(app)) == {old, TARGET}
+
+
+# L21: an hour the forecast API has no complete window for is skipped, not guessed
+def test_hours_without_a_full_window_are_skipped(app, real_window, monkeypatch, no_backfill):
+    store_hours(app, [TARGET - timedelta(hours=50)])
+    stub_api(monkeypatch, long_payload(real_window, hours_before=30))
+    live.refresh(app)
+    filled = sorted(t for t, source in history(app).items() if source == "backfill")
+    # The payload starts 30 h before NOW's hour, so the first hour with 24 full hours before it is 6 h before
+    assert filled and filled[0] == NOW.replace(minute=0) - timedelta(hours=30) + timedelta(hours=config.WINDOW)
+    assert TARGET - timedelta(hours=49) not in history(app)

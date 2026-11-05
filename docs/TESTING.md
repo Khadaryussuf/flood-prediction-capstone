@@ -517,3 +517,13 @@ was its own commit, and each passed pytest, Vitest and the build before it.
 
 The pressure chart's tab stays "Pressure" so the five tabs still fit at 360 px; its
 heading says "Station pressure".
+
+### Item 3: filling missed hours
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| L17 | Two hours missing before the current one (as on 3 Nov, 19:00 and 20:00) | The next run fills both as "backfill", each from the 24 hours before it, and raises no alert | As expected. PASSED | None |
+| L18 | No gap | No extra forecast call | As expected. PASSED | None |
+| L19 | The gap-fill call fails | The live reading is still stored | As expected. PASSED | None |
+| L20 | Gap older than 31 days | Left alone | As expected. PASSED | None |
+| L21 | Forecast data too short for some missed hours | Those hours are skipped, not guessed; the rest are filled | As expected. PASSED | None |
