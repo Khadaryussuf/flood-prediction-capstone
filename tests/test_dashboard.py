@@ -236,3 +236,12 @@ def test_third_party_lists_components_and_production_tree():
         if path and not info.get("dev") and not info.get("optional"):
             name = path.rsplit("node_modules/", 1)[1]
             assert f"| `{name}` | {info['version']} | {info['license']} |" in text, path
+
+
+# T40: the Demo page's map gets positions only, no forecast for replayed hours
+def test_meta_gives_the_demo_map_positions(client):
+    from backend import map_data
+    body = client.get("/api/meta").get_json()["map"]
+    assert body["centre"] == {"lat": config.LATITUDE, "lon": config.LONGITUDE}
+    assert [zone["name"] for zone in body["zones"]] == [zone["name"] for zone in map_data.ZONES]
+    assert all(set(zone) == {"name", "lat", "lon"} for zone in body["zones"])

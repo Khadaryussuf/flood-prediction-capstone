@@ -332,6 +332,10 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
                             "end": test.index[-1].isoformat()},
             "window_hours": config.WINDOW,
             "window_count": window_count,
+            # Where the Demo page's map puts the model's grid cell and the watch zones.
+            # Only positions: there is no forecast for the replayed hours
+            "map": {"centre": {"lat": config.LATITUDE, "lon": config.LONGITUDE},
+                    "zones": [dict(zone) for zone in map_data.ZONES]},
             "wettest": [{"index": int(i), "actual_mm": float(mm),
                          "target_time": test.index[i + config.WINDOW].isoformat()}
                         for i, mm in wettest.items()],

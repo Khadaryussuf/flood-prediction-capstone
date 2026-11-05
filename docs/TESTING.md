@@ -527,3 +527,15 @@ heading says "Station pressure".
 | L19 | The gap-fill call fails | The live reading is still stored | As expected. PASSED | None |
 | L20 | Gap older than 31 days | Left alone | As expected. PASSED | None |
 | L21 | Forecast data too short for some missed hours | Those hours are skipped, not guessed; the rest are filled | As expected. PASSED | None |
+
+### Item 4: map on the Demo page
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| T40 | `/api/meta` map positions | The grid cell's centre and the three watch zones, positions only | As expected. PASSED | None |
+| A25 | Replay prediction under limits low enough to give Medium or High | `/predict` returns that level and no alert or delivery row is created | As expected. PASSED | None |
+| Vitest | Demo page map | Shows the map with zone names; the marker reads "Low 0.06 mm", then "Medium 4.03 mm" after Play moves to the next hour; the replay makes no alert, map-forecast or live request | As expected. PASSED | None |
+| Screenshot | `/demo` at 360 and 1280 px, both themes | Map below the replay, marker clear of CBD, no overflow, no console errors | As expected. PASSED | None |
+
+The Demo map has no rainfall layers: no forecast exists for the replayed hours, and
+today's forecast wouldn't match them. The card says so.

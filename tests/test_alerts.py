@@ -323,3 +323,12 @@ def test_email_names_the_hour_and_the_limits_in_use(engine, make_user, smtp):
     start = TARGET - timedelta(hours=1)
     assert f"between {start:%H:%M} and {TARGET:%H:%M} on {start:%d %b %Y}" in body
     assert limits.DISCLAIMER_OVERRIDDEN in body and "AMS" not in body
+
+
+# A25: the Demo replay goes through /predict, which never raises an alert, even
+# when its prediction is Medium or High under the limits in use
+def test_replay_predictions_never_raise_alerts(admin, engine, real_window):
+    admin.put("/api/admin/thresholds", json={"medium_from": 0.0001, "high_from": 0.0002, "cooldown_hours": 3})
+    body = admin.post("/predict", json={"readings": real_window}).get_json()
+    assert body["risk_level"] in ("moderate", "high")
+    assert event_count(engine) == 0 and deliveries(engine) == []

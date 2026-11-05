@@ -12,7 +12,7 @@ import { formatClock, formatHour, formatMm } from '@/lib/format'
 import type { LiveCurrent, MapForecast } from '@/lib/types'
 
 const REFRESH_MS = 30 * 60 * 1000
-const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+export const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 
 /** Blues for forecast rain: deliberately not the risk colours, so nobody reads a
  *  neighbourhood's forecast as the model's risk for it. */
@@ -24,8 +24,8 @@ const RAIN_SCALE: { from: number; colour: string; label: string }[] = [
 ]
 
 // The zones and the marker are close together, so each label goes its own way
-const ZONE_LABEL_SIDE: Record<string, 'top' | 'bottom' | 'left'> = { Mathare: 'top', CBD: 'left', Kibera: 'bottom' }
-const ZONE_LABEL_OFFSET: Record<string, [number, number]> = { top: [0, -6], bottom: [0, 6], left: [-6, 0] }
+export const ZONE_LABEL_SIDE: Record<string, 'top' | 'bottom' | 'left'> = { Mathare: 'top', CBD: 'left', Kibera: 'bottom' }
+export const ZONE_LABEL_OFFSET: Record<string, [number, number]> = { top: [0, -6], bottom: [0, 6], left: [-6, 0] }
 
 /** Pixels from the cell's centre to the pill's top-left corner, negated as Leaflet wants */
 export const MARKER_ANCHOR: [number, number] = [-12, -12]

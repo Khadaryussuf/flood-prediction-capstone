@@ -3,6 +3,7 @@ import { Pause, Play, TriangleAlert } from 'lucide-react'
 
 import { HeroPanel } from '@/components/dashboard/HeroPanel'
 import { WindowChart } from '@/components/dashboard/WindowChart'
+import { ReplayMap } from '@/components/map/ReplayMap'
 import { Button } from '@/components/ui/button'
 import { getHealth, getMeta, getReplay, predict } from '@/lib/api'
 import { DEMO_LABEL } from '@/lib/copy'
@@ -100,6 +101,13 @@ export function DemoPage() {
           <WindowChart meta={meta} replay={replay} prediction={prediction} />
         </section>
       </div>
+
+      {meta?.map && (
+        <section aria-label="Replay map" className="min-w-0">
+          <ReplayMap map={meta.map} level={prediction?.risk_level ?? null} mm={prediction?.predicted_mm ?? null}
+            targetTime={replay?.target_time ?? null} />
+        </section>
+      )}
     </div>
   )
 }

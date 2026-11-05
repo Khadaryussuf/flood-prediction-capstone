@@ -2,6 +2,29 @@
   "data_label": "Replay of held-out test period (not live)",
   "disclaimer": "Risk level is hourly rainfall intensity (AMS classes), not flood probability, and is not calibrated to Nairobi flood records.",
   "highest_risk": "high",
+  "map": {
+    "centre": {
+      "lat": -1.2921,
+      "lon": 36.8219
+    },
+    "zones": [
+      {
+        "lat": -1.2594,
+        "lon": 36.859,
+        "name": "Mathare"
+      },
+      {
+        "lat": -1.3133,
+        "lon": 36.7876,
+        "name": "Kibera"
+      },
+      {
+        "lat": -1.2864,
+        "lon": 36.8172,
+        "name": "CBD"
+      }
+    ]
+  },
   "test_period": {
     "end": "2025-12-31T23:00:00",
     "start": "2025-04-02T02:00:00"

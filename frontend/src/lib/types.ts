@@ -139,6 +139,8 @@ export interface Meta {
   window_hours: number
   window_count: number
   wettest: { index: number; actual_mm: number; target_time: string }[]
+  /** Positions for the Demo page's map */
+  map?: { centre: { lat: number; lon: number }; zones: { name: string; lat: number; lon: number }[] }
 }
 
 /** GET /api/replay/<index> */
