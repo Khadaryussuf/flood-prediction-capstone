@@ -486,3 +486,18 @@ Acknowledge button on the administrator's row, and the administrator's count sta
 | Issue | How it was found | Corrective action |
 |-------|------------------|-------------------|
 | Settings couldn't save a limit finer than 0.1 mm. The fields had `step="0.1"`, so the browser blocked 0.01 or 2.55 and Save did nothing | This run's first attempt stopped at Save. A browser check confirmed the message "The two nearest valid values are 0 and 0.1" | Both mm fields now use `step="any"`, with a Vitest test for it. Vitest's jsdom doesn't enforce `step`, which is why the earlier tests passed |
+## Round 2: changes from the click-through
+
+Changes asked for after a click-through of the running app on 2026-11-03. Each item
+was its own commit, and each passed pytest, Vitest and the build before it.
+
+### Item 1: no-access and not-found pages
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| S12 (changed) | Responder opens `/settings` | The app's page loads (it shows "You don't have access"); `/api/admin/users` and `/api/admin/thresholds` still give 403 | As expected. PASSED | Replaces the old redirect to the Dashboard |
+| S36 | Signed-in browser opens an unknown address | The app's page with a 404 status, which shows "Page not found" | As expected. PASSED | None |
+| S37 | Unknown address with no session | Redirect to `/login` | As expected. PASSED | None |
+| S38 | Unknown `/api/` address | JSON 404 with a session, 401 without; a non-browser request to an unknown page still gets 401 | As expected. PASSED | None |
+| Vitest | Responder on `/settings` | "You don't have access", no Settings link, a link to the Dashboard, and no `/api/admin` request made | As expected. PASSED | None |
+| Vitest | Unknown address, logged in / logged out | "Page not found" inside the app shell / the login page | As expected. PASSED | None |

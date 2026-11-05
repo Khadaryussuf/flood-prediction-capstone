@@ -37,6 +37,8 @@ PUBLIC_PATHS = {"/health", "/api/auth/session", "/api/auth/login", "/api/auth/si
                 "/login", "/signup"}
 # The browser pages. Without a session these go to the login page instead of a 401.
 PAGE_PATHS = {"/", "/dashboard", "/trends", "/alerts", "/settings", "/evidence", "/demo"}
+# Never treated as a browser page, even when a browser asks for them
+NOT_PAGES = ("/api/", "/static/", "/predict", "/health")
 
 
 class FloodWatchSessionInterface(SecureCookieSessionInterface):
@@ -114,6 +116,13 @@ def load_user(engine):
         return user
 
 
+def is_page_navigation(path):
+    """A browser asking for a page at an address the app doesn't know, such as a
+    mistyped link. It gets the login page, or the app's own not-found page."""
+    return (request.method == "GET" and not path.startswith(NOT_PAGES)
+            and "text/html" in request.headers.get("Accept", ""))
+
+
 def check_request(engine):
     """Runs before every request. Returns a response to refuse it, or None."""
     path = request.path.rstrip("/") or "/"
@@ -121,14 +130,14 @@ def check_request(engine):
 
     is_public = path in PUBLIC_PATHS or path.startswith("/static/")
     if not is_public and g.user is None:
-        if path in PAGE_PATHS:
+        if path in PAGE_PATHS or is_page_navigation(path):
             return redirect("/login")
         return jsonify({"error": "Login required"}), 401
 
     if path.startswith("/api/admin") and g.user.role != ROLE_ADMIN:
         return jsonify({"error": "Administrator access required"}), 403
-    if path == "/settings" and g.user.role != ROLE_ADMIN:
-        return redirect("/dashboard")
+    # /settings itself is only the app's page, which shows a non-administrator a
+    # "no access" screen; everything it loads is under /api/admin.
 
     if request.method in UNSAFE_METHODS:
         sent = request.headers.get(CSRF_HEADER, "")

@@ -293,6 +293,17 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
                     503, {"Content-Type": "text/plain; charset=utf-8"})
         return send_file(DASHBOARD_INDEX)
 
+    @app.errorhandler(404)
+    def not_found(error):
+        """Unknown addresses: a browser gets the app, which shows its not-found
+        page (still with a 404 status); anything else gets JSON."""
+        path = request.path.rstrip("/") or "/"
+        if security.is_page_navigation(path) and DASHBOARD_INDEX.exists():
+            response = send_file(DASHBOARD_INDEX)
+            response.status_code = 404
+            return response
+        return jsonify({"error": "Not found"}), 404
+
     @app.get("/api/meta")
     def meta():
         with Session(engine) as session:

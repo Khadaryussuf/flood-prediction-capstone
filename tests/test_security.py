@@ -111,6 +111,11 @@ def test_failures_outside_the_window_do_not_add_up(anon, make_user, monkeypatch)
     assert anon.login(email, new_password()).status_code == 401
 
 
+def app_built():
+    from backend.app import DASHBOARD_INDEX
+    return DASHBOARD_INDEX.exists()
+
+
 # S8: default deny, checked against every route the app has
 def test_no_session_gives_401_on_every_api_route(app, anon):
     public = {"/api/auth/session", "/api/auth/login", "/api/auth/signup", "/health"}
@@ -156,10 +161,38 @@ def test_responder_gets_403_on_every_admin_route(app, client):
     assert checked >= 4
 
 
-# S12
-def test_responder_is_redirected_away_from_the_settings_page(client, admin):
-    assert client.get("/settings").headers["Location"] == "/dashboard"
+# S12: the page is only the app, which shows a responder "You don't have access";
+# the data behind it stays administrator-only
+def test_responder_gets_the_app_on_settings_but_403_from_its_api(client, admin):
+    assert client.get("/settings").status_code in (200, 503)
+    assert client.get("/api/admin/users").status_code == 403
+    assert client.get("/api/admin/thresholds").status_code == 403
     assert admin.get("/settings").status_code in (200, 503)
+
+
+BROWSER = {"Accept": "text/html,application/xhtml+xml,*/*;q=0.8"}
+
+
+# S36
+def test_unknown_page_gives_a_browser_the_app_with_a_404(client):
+    response = client.get("/no-such-page", headers=BROWSER)
+    assert response.status_code == 404
+    if app_built():
+        assert b'<div id="root">' in response.data
+
+
+# S37
+def test_unknown_page_without_a_session_goes_to_login(anon):
+    response = anon.get("/no-such-page", headers=BROWSER)
+    assert response.status_code == 302 and response.headers["Location"] == "/login"
+
+
+# S38: unknown API addresses stay JSON, and stay closed without a session
+def test_unknown_api_path_is_json(client, anon):
+    response = client.get("/api/no-such-thing", headers=BROWSER)
+    assert response.status_code == 404 and response.get_json() == {"error": "Not found"}
+    assert anon.get("/api/no-such-thing", headers=BROWSER).status_code == 401
+    assert anon.get("/no-such-page").status_code == 401  # not a browser page request
 
 
 # S13

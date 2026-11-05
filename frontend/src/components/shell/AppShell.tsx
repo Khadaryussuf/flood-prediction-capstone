@@ -121,6 +121,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const { pathname } = useLocation()
   const current = [...MAIN_NAV, DEMO_NAV].find((item) => item.to === pathname)?.label ?? 'FloodWatch'
+  const { user } = useAuth()
+  // The top bar names the page; a responder on /settings sees "no access", not Settings
+  const title = pathname === '/settings' && user?.role !== 'admin' ? 'FloodWatch' : current
 
   return (
     <div className="flex min-h-svh bg-background">
@@ -147,7 +150,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <NavLinks onNavigate={() => setMenuOpen(false)} />
             </SheetContent>
           </Sheet>
-          <h1 className="min-w-0 truncate text-base font-semibold">{current}</h1>
+          <h1 className="min-w-0 truncate text-base font-semibold">{title}</h1>
           <div className="ml-auto flex items-center gap-2">
             <AlertBell />
             <ThemeToggle />

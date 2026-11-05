@@ -123,13 +123,29 @@ describe('access', () => {
     expect(calls.some((call) => call.path === '/api/auth/signup')).toBe(false)
   })
 
-  it('hides Settings from a responder and redirects them away from it', async () => {
-    fakeServer(makeUser({ role: 'responder', name: 'Rita' }))
+  it('hides Settings from a responder, and tells them they have no access if they open it', async () => {
+    const calls = fakeServer(makeUser({ role: 'responder', name: 'Rita' }))
     renderAt('/settings')
-    const nav = await screen.findByRole('navigation', { name: 'Main' })
-    await waitFor(() => expect(within(nav).getByRole('link', { name: 'Dashboard' })).toHaveAttribute('aria-current', 'page'))
+    expect(await screen.findByRole('heading', { name: "You don't have access" })).toBeInTheDocument()
+    const nav = screen.getByRole('navigation', { name: 'Main' })
     expect(within(nav).queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument()
     expect(within(nav).getByRole('link', { name: 'Model evidence' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Go to the Dashboard' })).toHaveAttribute('href', '/dashboard')
+    // Nothing administrator-only was even asked for
+    expect(calls.some((call) => call.path.startsWith('/api/admin'))).toBe(false)
+  })
+
+  it('shows a not-found page inside the app for an unknown address', async () => {
+    fakeServer(makeUser({ role: 'responder' }))
+    renderAt('/no-such-page')
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument()
+  })
+
+  it('sends someone not logged in from an unknown address to the login page', async () => {
+    fakeServer(null)
+    renderAt('/no-such-page')
+    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
   })
 
   it('lets an administrator approve a pending account', async () => {

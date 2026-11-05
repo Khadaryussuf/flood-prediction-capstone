@@ -10,6 +10,7 @@ import EvidencePage from '@/pages/EvidencePage'
 import { LoginPage } from '@/pages/LoginPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SignupPage } from '@/pages/SignupPage'
+import { NoAccessPage, NotFoundPage } from '@/pages/StatusPage'
 import { TrendsPage } from '@/pages/TrendsPage'
 
 /** Shows its pages only when logged in. The server enforces this too; this
@@ -28,7 +29,7 @@ function RequireLogin() {
 
 function RequireAdmin() {
   const { user } = useAuth()
-  return user?.role === 'admin' ? <Outlet /> : <Navigate to="/dashboard" replace />
+  return user?.role === 'admin' ? <Outlet /> : <NoAccessPage />
 }
 
 export default function App() {
@@ -45,8 +46,9 @@ export default function App() {
         <Route element={<RequireAdmin />}>
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )
 }
