@@ -43,6 +43,9 @@ const PAIRS = [
   ['risk-moderate-solid', 'card', 3],
   ['risk-high-solid', 'card', 3],
   ['ring', 'background', 3],
+  ['brand-foreground', 'brand', 4.5],
+  ['brand-muted', 'brand', 4.5],
+  ['brand-accent', 'brand', 3],
 ]
 
 let failed = 0

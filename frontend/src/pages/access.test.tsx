@@ -50,11 +50,66 @@ function renderAt(path: string) {
 }
 
 describe('access', () => {
-  it('sends anyone not logged in to the login page, which shows the disclaimer', async () => {
+  it('sends anyone not logged in to the login page, which shows no risk and so no disclaimer strip', async () => {
     fakeServer(null)
     renderAt('/dashboard')
     expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
-    expect(screen.getByRole('note', { name: 'Disclaimer' })).toHaveTextContent(DISCLAIMER)
+    expect(screen.queryByRole('note', { name: 'Disclaimer' })).not.toBeInTheDocument()
+    expect(screen.getByRole('complementary', { name: 'About FloodWatch' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Change theme/ })).toBeInTheDocument()
+  })
+
+  it('keeps the disclaimer strip on pages that show risk', async () => {
+    fakeServer(makeUser({ role: 'responder' }))
+    renderAt('/dashboard')
+    expect(await screen.findByRole('note', { name: 'Disclaimer' })).toHaveTextContent(DISCLAIMER)
+  })
+
+  it('has no disclaimer strip on the sign-up page either', async () => {
+    fakeServer(null)
+    renderAt('/signup')
+    expect(await screen.findByRole('heading', { name: 'Request an account' })).toBeInTheDocument()
+    expect(screen.queryByRole('note', { name: 'Disclaimer' })).not.toBeInTheDocument()
+  })
+
+  it('shows and hides the password', async () => {
+    const user = userEvent.setup()
+    fakeServer(null)
+    renderAt('/login')
+    const field = await screen.findByLabelText('Password')
+    expect(field).toHaveAttribute('type', 'password')
+    await user.click(screen.getByRole('button', { name: 'Show password' }))
+    expect(field).toHaveAttribute('type', 'text')
+    expect(screen.getByRole('button', { name: 'Hide password' })).toHaveAttribute('aria-pressed', 'true')
+    await user.click(screen.getByRole('button', { name: 'Hide password' }))
+    expect(field).toHaveAttribute('type', 'password')
+  })
+
+  it('gives a pending account its own clear title', async () => {
+    const user = userEvent.setup()
+    fakeServer(null, { '/api/auth/login': () => [403, { error: 'Your account is awaiting approval by an administrator.', code: 'awaiting_approval' }] })
+    renderAt('/login')
+    await user.type(await screen.findByLabelText('Email'), 'a@example.org')
+    await user.type(screen.getByLabelText('Password'), 'some-long-enough')
+    await user.click(screen.getByRole('button', { name: 'Log in' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Not approved yet')
+  })
+
+  it('puts sign-up errors by the field they are about', async () => {
+    const user = userEvent.setup()
+    const calls = fakeServer(null, { '/api/auth/signup': () => [409, { error: 'That email is already registered.' }] })
+    renderAt('/signup')
+    await user.type(await screen.findByLabelText('Name'), 'Ben')
+    await user.type(screen.getByLabelText('Email'), 'b@example.org')
+    await user.type(screen.getByLabelText('Organisation'), 'Red Cross')
+    await user.type(screen.getByLabelText('Password'), 'long-enough-value')
+    await user.type(screen.getByLabelText('Confirm password'), 'long-enough-value')
+    await user.click(screen.getByRole('button', { name: 'Request account' }))
+    await screen.findByRole('alert')
+    const email = screen.getByLabelText('Email')
+    expect(email).toHaveAttribute('aria-invalid', 'true')
+    expect(email).toHaveAccessibleDescription('That email is already registered.')
+    expect(calls.some((call) => call.path === '/api/auth/signup')).toBe(true)
   })
 
   it('shows the server message on a failed login and clears the password', async () => {
@@ -121,6 +176,7 @@ describe('access', () => {
     await user.click(screen.getByRole('button', { name: 'Request account' }))
     expect(await screen.findByRole('alert')).toHaveTextContent("don't match")
     expect(calls.some((call) => call.path === '/api/auth/signup')).toBe(false)
+    expect(screen.getByLabelText('Confirm password')).toHaveAttribute('aria-invalid', 'true')
   })
 
   it('hides Settings from a responder, and tells them they have no access if they open it', async () => {

@@ -34,8 +34,9 @@ try {
 
         if (!PUBLIC.has(path)) {
           await page.goto(`${BASE}/login`)
-          await page.getByLabel('Email').fill(process.env.FW_EMAIL ?? '')
-          await page.getByLabel('Password').fill(process.env.FW_PASSWORD ?? '')
+          // exact: the show/hide button's name also contains "password"
+          await page.getByLabel('Email', { exact: true }).fill(process.env.FW_EMAIL ?? '')
+          await page.getByLabel('Password', { exact: true }).fill(process.env.FW_PASSWORD ?? '')
           await page.getByRole('button', { name: 'Log in' }).click()
           await page.waitForURL('**/dashboard')
         }

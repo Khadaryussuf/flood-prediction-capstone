@@ -539,3 +539,17 @@ heading says "Station pressure".
 
 The Demo map has no rainfall layers: no forecast exists for the replayed hours, and
 today's forecast wouldn't match them. The card says so.
+
+### Item 5: login and sign-up redesign
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| Vitest | Login and sign-up pages | Brand panel present, theme toggle present, no disclaimer strip (no risk is shown there) | As expected. PASSED | Replaces the test that expected the strip on the login page |
+| Vitest | Pages that show risk | The disclaimer strip is still there (Dashboard checked; it is in the shell of every signed-in page) | As expected. PASSED | None |
+| Vitest | Show/hide password | Switches the field between hidden and visible, with `aria-pressed` and a "Show/Hide password" name | As expected. PASSED | None |
+| Vitest | Clear errors | A pending account gets the title "Not approved yet"; a server refusal about the email marks that field invalid with the message under it; mismatched passwords mark the confirm field | As expected. PASSED | None |
+| Contrast | New brand-panel colours | AA in both themes | brand text 11.98:1 and 13.51:1, muted text 8.39:1 and 8.63:1. PASSED | None |
+| Screenshot | `/login` and `/signup` at 360 and 1280 px, both themes | Split layout at 1280 px; at 360 px a short brand band above the form; no overflow, no console errors | As expected after two fixes. PASSED | At 360 px the skyline overlapped the tagline and the brand band took half the screen: the drawing was shortened and the band made auto-height |
+
+`scripts/screenshots.mjs` now finds the Email and Password fields by exact label, since
+the show/hide button's name also contains "password".
