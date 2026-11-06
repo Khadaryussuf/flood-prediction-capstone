@@ -15,7 +15,7 @@ function serveOverride(state: { overridden: boolean }) {
 const someone = { id: 1, name: 'A', email: 'a@example.org', organisation: '', role: 'responder', status: 'active', created_at: '', last_login_at: null } as const
 
 const renderStrip = (loggedIn = true) => render(
-  <AuthContext.Provider value={{ user: loggedIn ? someone : null, loading: false, login: async () => {}, logout: async () => {} }}>
+  <AuthContext.Provider value={{ user: loggedIn ? someone : null, loading: false, providers: { google: false }, login: async () => {}, logout: async () => {} }}>
     <MemoryRouter><DisclaimerStrip /></MemoryRouter>
   </AuthContext.Provider>,
 )

@@ -1,12 +1,37 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Info } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { ApiError } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { AuthCard, Field, PasswordField } from './AuthCard'
+import { GoogleButton } from './GoogleButton'
+
+/** What the server's Google callback reports back (backend/google_auth.py) */
+export const GOOGLE_MESSAGES: Record<string, { title: string; detail: string; tone: 'error' | 'info' }> = {
+  google_pending: {
+    title: 'Awaiting approval',
+    detail: 'Your Google account is linked to a FloodWatch account that an administrator must approve before you can log in.',
+    tone: 'info',
+  },
+  google_unverified: {
+    title: "Google hasn't verified that email",
+    detail: 'FloodWatch only accepts Google accounts with a verified email address. Verify it with Google, or log in with your password.',
+    tone: 'error',
+  },
+  google_disabled: {
+    title: 'Account disabled',
+    detail: 'This account has been disabled. Contact an administrator.',
+    tone: 'error',
+  },
+  google_failed: {
+    title: "Couldn't sign in with Google",
+    detail: 'The sign-in was cancelled, expired or could not be checked. Try again.',
+    tone: 'error',
+  },
+}
 
 /** A title for each kind of refusal, so the reason is clear at a glance */
 function errorTitle(error: ApiError | null): string {
@@ -24,6 +49,8 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<{ title: string; detail: string } | null>(null)
   const [busy, setBusy] = useState(false)
+  const googleResult = new URLSearchParams(location.search).get('google')
+  const googleMessage = googleResult && !error ? GOOGLE_MESSAGES[googleResult] : undefined
 
   if (user) {
     const from = (location.state as { from?: string } | null)?.from
@@ -48,6 +75,14 @@ export function LoginPage() {
 
   return (
     <AuthCard title="Log in" description="For registered responders and administrators.">
+      {googleMessage && (
+        <Alert variant={googleMessage.tone === 'error' ? 'destructive' : 'default'} role={googleMessage.tone === 'error' ? 'alert' : 'status'}>
+          {googleMessage.tone === 'error' ? <AlertTriangle aria-hidden /> : <Info aria-hidden />}
+          <AlertTitle>{googleMessage.title}</AlertTitle>
+          <AlertDescription>{googleMessage.detail}</AlertDescription>
+        </Alert>
+      )}
+      <GoogleButton />
       <form onSubmit={submit} className="flex flex-col gap-4">
         {error && (
           <Alert variant="destructive" role="alert">

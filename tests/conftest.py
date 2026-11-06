@@ -53,8 +53,11 @@ def password():
 
 
 @pytest.fixture
-def app(tmp_path):
-    """The real app with the real model, but a fresh temporary database."""
+def app(tmp_path, monkeypatch):
+    """The real app with the real model, but a fresh temporary database. Google
+    sign-in is off, whatever the machine's .env says (an empty value wins over it)."""
+    for name in ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URI"):
+        monkeypatch.setenv(name, "")
     app = create_app(database_url=f"sqlite:///{tmp_path.as_posix()}/test.db", testing=True)
     app.test_client_class = ApiClient
     yield app

@@ -36,7 +36,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from tensorflow import keras
 
-from backend import alerts, auth, history, live, map_data, scheduler, security, thresholds as limits
+from backend import alerts, auth, google_auth, history, live, map_data, scheduler, security, thresholds as limits
 from backend.db import DEFAULT_DATABASE_URL, Prediction, make_engine  # noqa: F401
 from backend.env import load_env
 from pipeline import config
@@ -194,6 +194,7 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
     app.before_request(lambda: security.check_request(engine))
     app.after_request(security.add_security_headers)
     app.register_blueprint(auth.bp)
+    google_auth.init_app(app)  # only active when GOOGLE_CLIENT_ID and _SECRET are set
 
     predict_lock = threading.Lock()  # the scheduler thread also uses the model
 

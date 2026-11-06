@@ -6,11 +6,18 @@ import type { User } from './types'
 interface SessionResponse {
   user: User | null
   csrf_token: string
+  providers?: Providers
+}
+
+/** Sign-in providers the server has set up */
+export interface Providers {
+  google: boolean
 }
 
 interface AuthState {
   user: User | null
   loading: boolean
+  providers: Providers
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
 }
@@ -19,6 +26,7 @@ interface AuthState {
 export const AuthContext = createContext<AuthState>({
   user: null,
   loading: true,
+  providers: { google: false },
   login: async () => {},
   logout: async () => {},
 })
@@ -27,11 +35,13 @@ export const AuthContext = createContext<AuthState>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [providers, setProviders] = useState<Providers>({ google: false })
 
   const refresh = useCallback(async () => {
     const session = await request<SessionResponse>('/api/auth/session')
     setCsrfToken(session.csrf_token)
     setUser(session.user)
+    setProviders({ google: session.providers?.google === true })
   }, [])
 
   useEffect(() => {
@@ -58,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
-  return <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, loading, providers, login, logout }}>{children}</AuthContext.Provider>
 }
 
 // oxlint-disable-next-line react/only-export-components

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { ApiError, postJson } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { AuthCard, Field, PasswordField } from './AuthCard'
+import { GoogleButton } from './GoogleButton'
 
 const LOGIN_LINK = <Link to="/login" className="font-medium text-primary underline underline-offset-4">Log in</Link>
 const MIN_PASSWORD = 10
@@ -85,6 +86,7 @@ export function SignupPage() {
 
   return (
     <AuthCard title="Request an account" description="An administrator approves each new responder account.">
+      <GoogleButton />
       <form onSubmit={submit} className="flex flex-col gap-4">
         {error && (
           <Alert variant="destructive" role="alert">

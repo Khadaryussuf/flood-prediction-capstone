@@ -118,7 +118,8 @@ def app_built():
 
 # S8: default deny, checked against every route the app has
 def test_no_session_gives_401_on_every_api_route(app, anon):
-    public = {"/api/auth/session", "/api/auth/login", "/api/auth/signup", "/health"}
+    public = {"/api/auth/session", "/api/auth/login", "/api/auth/signup", "/health",
+              "/api/auth/google/login", "/api/auth/google/callback"}  # tested in test_google.py
     checked = 0
     for rule in app.url_map.iter_rules():
         path = rule.rule

@@ -489,7 +489,8 @@ Acknowledge button on the administrator's row, and the administrator's count sta
 ## Round 2: changes from the click-through
 
 Changes asked for after a click-through of the running app on 2026-11-03. Each item
-was its own commit, and each passed pytest, Vitest and the build before it.
+was its own commit. Before each commit the affected pytest files, all of Vitest and the
+build passed; the full suites ran at the end (results below).
 
 ### Item 1: no-access and not-found pages
 
@@ -553,3 +554,40 @@ today's forecast wouldn't match them. The card says so.
 
 `scripts/screenshots.mjs` now finds the Email and Password fields by exact label, since
 the show/hide button's name also contains "password".
+
+### Item 6: Google sign-in
+
+New file `tests/test_google.py`. No request reaches Google: the code exchange and the
+validated ID-token claims are replaced with stand-ins, while Authlib's state check
+runs for real. Package: Authlib 1.9.5, chosen because it fixes all five published
+advisories (one high, GHSA-f7j6-p4qx-gq99, affects every version up to 1.9.4).
+
+| ID | Test | Expected | Actual | Corrective action |
+|----|------|----------|--------|-------------------|
+| G1 | Only one of the two settings set | `providers.google` is false; both Google routes give 404 | As expected. PASSED | None |
+| G2 | Start a sign-in | Redirect to accounts.google.com with the client id, `openid email profile`, a state, a nonce and an S256 PKCE challenge; never the secret | As expected. PASSED | None |
+| G3 | **State check**: callback with no sign-in started, and with another state | Refused (`google_failed`) before any code exchange; no session | As expected. PASSED | None |
+| G4 | Callback with the real state | Exactly one code exchange; the same state can't be used again; no ID token, so refused | As expected. PASSED | None |
+| G5 | Google returns `error=access_denied` | Refused; no session | As expected. PASSED | None |
+| G6 | **Unverified email**: `email_verified` false, the string "true", or missing | Refused (`google_unverified`), even for an existing administrator's email; no account made | As expected. PASSED | None |
+| G7 | **Role never from Google**: new user whose claims include role, roles, groups, hd and status of admin/active | A pending Responder; no session; one `google_signup` audit row | As expected. PASSED | None |
+| G8 | Existing administrator / responder, email in a different case, claims naming the other role | Signs in; keeps its own role | As expected. PASSED | None |
+| G9 | Existing pending / disabled account | `google_pending` / `google_disabled`; no session | As expected. PASSED | None |
+| G10 | Google-created account after approval | Signs in as a Responder; CSRF still required on POST | As expected. PASSED | None |
+| G11 | Password login to a Google-created account | Refused for guessed passwords (its password is random and never shown) | As expected. PASSED | None |
+| S8 (changed) | Default deny | The two Google routes join the public list; every other `/api/` route still gives 401 | As expected. PASSED | None |
+| Vitest | Button | Shown on `/login` and `/signup` as a link to `/api/auth/google/login` when the server reports Google; hidden otherwise; each result code is explained; an unknown code shows nothing | As expected. PASSED | None |
+| Screenshot | `/login` and `/signup` with a dummy client id, 360 and 1280 px, both themes | Button above an "or with email" divider; no overflow, no console errors | As expected. PASSED | None |
+
+Not tested: a real sign-in with Google, which needs an OAuth client from Google Cloud.
+The pytest app fixture now sets the Google settings to empty, so a machine's `.env`
+can't switch Google on for the other tests.
+
+### Results of the round
+
+Run on 2026-11-06 after item 6: pytest **207 passed** (179 before the round), Vitest
+**94 passed** (70 before), contrast check all pairs pass, build clean. oxlint on the
+changed files: 0 errors; 5 new `only-export-components` warnings (fast-refresh only)
+where constants are now exported. SHA-256 of the 228 protected files was the same
+before and after the round. Visual checks used a scratch database on port 5055; the
+server on port 5000, `demo.db` and `.env` were not touched.

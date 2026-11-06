@@ -63,7 +63,9 @@ def record_failure(db_session, email):
 @bp.get("/api/auth/session")
 def auth_session():
     user = g.user.to_dict() if g.user else None
-    return jsonify({"user": user, "csrf_token": security.csrf_token()})
+    # Which sign-in providers the login page may offer
+    providers = {"google": current_app.config.get("GOOGLE_OAUTH") is not None}
+    return jsonify({"user": user, "csrf_token": security.csrf_token(), "providers": providers})
 
 
 @bp.post("/api/auth/login")

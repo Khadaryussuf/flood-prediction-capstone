@@ -33,8 +33,9 @@ LOCALHOST_NAMES = {"localhost", "127.0.0.1", "[::1]", "::1"}
 
 # /api/auth/session only says whether you're logged in and hands out the CSRF
 # token that login and sign-up themselves need.
+# The two Google routes start and finish a sign-in; the OAuth state protects the second.
 PUBLIC_PATHS = {"/health", "/api/auth/session", "/api/auth/login", "/api/auth/signup",
-                "/login", "/signup"}
+                "/api/auth/google/login", "/api/auth/google/callback", "/login", "/signup"}
 # The browser pages. Without a session these go to the login page instead of a 401.
 PAGE_PATHS = {"/", "/dashboard", "/trends", "/alerts", "/settings", "/evidence", "/demo"}
 # Never treated as a browser page, even when a browser asks for them
