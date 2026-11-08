@@ -172,6 +172,30 @@
   }
 }
 
+/* Login and sign-up brand panel: rain falling in the sky above the skyline, and
+   the wave drifting. Slow on purpose; none at all with reduced motion. */
+.fw-rain-drop {
+  animation: fw-rain linear infinite;
+}
+@keyframes fw-rain {
+  from { transform: translate(0, -20px); opacity: 0; }
+  15% { opacity: 1; }
+  to { transform: translate(-24px, 150px); opacity: 0.6; }
+}
+.fw-wave {
+  animation: fw-wave-drift 14s linear infinite;
+}
+@keyframes fw-wave-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-200px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fw-rain-drop,
+  .fw-wave {
+    animation: none;
+  }
+}
+
 /* The map's risk marker: a shape and text on a solid chip, readable over any tiles */
 .fw-risk-marker {
   display: inline-block;

@@ -7,26 +7,37 @@ import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
 /** A city skyline under rain: drawn here, so nothing is downloaded. The towers
- *  are generic, not a map of real buildings. */
+ *  are generic, not a map of real buildings. It sits in its own box below the text,
+ *  so rain and buildings never run behind the words. The rain falls only in the sky
+ *  above the roofs, and the buildings are drawn over it. Motion is CSS only (index.css)
+ *  and stops for anyone who asks for reduced motion. */
 function RainOverCity({ className }: { className?: string }) {
-  const drops = Array.from({ length: 42 }, (_, i) => ({
-    x: (i * 37) % 400,
-    y: (i * 53) % 150,
-    length: 12 + ((i * 7) % 10),
+  // Thin streaks spread across the sky; each starts at its own point in the cycle
+  const drops = Array.from({ length: 34 }, (_, i) => ({
+    x: 6 + ((i * 47) % 396),
+    length: 10 + ((i * 7) % 8),
+    delay: -((i * 0.37) % 2.6),
+    duration: 2.2 + ((i * 13) % 9) / 10,
   }))
+  // A gentle wave twice as wide as the view, so drifting by one period loops seamlessly
+  const wave = 'M0 188 q50 -8 100 0' + ' t100 0'.repeat(7)
   return (
-    <svg viewBox="0 0 400 260" className={className} aria-hidden focusable="false" preserveAspectRatio="xMidYMax slice">
-      <g className="text-brand-accent" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.55">
-        {drops.map(({ x, y, length }, i) => (
-          <line key={i} x1={x} y1={y + 20} x2={x - length * 0.35} y2={y + 20 + length} />
+    <svg viewBox="0 0 400 200" className={className} aria-hidden focusable="false" preserveAspectRatio="xMidYMax slice">
+      <g className="text-brand-accent" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.45">
+        {drops.map(({ x, length, delay, duration }, i) => (
+          <line key={i} className="fw-rain-drop" x1={x} y1={0} x2={x - length * 0.3} y2={length}
+            style={{ animationDelay: `${delay}s`, animationDuration: `${duration}s` }} />
         ))}
       </g>
-      <g className="text-brand-foreground" fill="currentColor">
-        <path opacity="0.16" d="M0 260V200h30v-24h22v34h18v-50h26v40h20v-18h24v-30h14v-22h10v22h14v58h22v-36h30v26h18v-62h28v52h22v-28h26v46h20v-20h30v40h26v48z" />
-        <path opacity="0.32" d="M0 260v-38h24v-20h28v34h20v-14h26v-40h18v-28h8v28h18v54h26v-26h22v-46h12l8-14 8 14h12v60h24v-30h30v22h18v-42h26v50h28v-24h24v54z" />
+      {/* Solid, a little darker than the panel and close to it in tone: the text stands
+          out, and the rain behind the roofs doesn't show through the walls */}
+      <g>
+        <path style={{ fill: 'color-mix(in srgb, var(--brand), black 22%)' }} d="M0 200v-68h30v-20h22v28h18v-40h26v32h20v-14h24v-24h14v-18h10v18h14v46h22v-28h30v20h18v-50h28v42h22v-22h26v36h20v-16h30v32h26v38z" />
+        <path style={{ fill: 'color-mix(in srgb, var(--brand), black 38%)' }} d="M0 200v-48h24v-16h28v26h20v-10h26v-32h18v-22h8v22h18v42h26v-20h22v-36h12l8-12 8 12h12v46h24v-24h30v18h18v-34h26v40h28v-18h24v62z" />
       </g>
-      <path className="text-brand-accent" stroke="currentColor" strokeWidth="2.5" fill="none" opacity="0.9"
-        d="M0 246c40-8 70 8 110 0s70-10 110 0 70 8 110 0 50-6 70-2" />
+      <g className="fw-wave text-brand-accent">
+        <path stroke="currentColor" strokeWidth="2" fill="none" opacity="0.7" d={wave} />
+      </g>
     </svg>
   )
 }
@@ -39,9 +50,10 @@ const POINTS = [
 
 function BrandPanel() {
   return (
-    <aside className="relative isolate overflow-hidden bg-brand text-brand-foreground" aria-label="About FloodWatch">
-      <RainOverCity className="absolute inset-x-0 bottom-0 -z-10 h-14 w-full sm:h-20 lg:h-2/5" />
-      <div className="flex flex-col gap-3 px-4 pt-5 pb-16 pr-16 sm:px-8 sm:pb-24 lg:h-full lg:gap-8 lg:px-12 lg:pt-12 lg:pb-12">
+    // Two boxes, one above the other: the text, then the skyline (the bottom third on
+    // wide screens). Neither is drawn over the other.
+    <aside className="flex flex-col overflow-hidden bg-brand text-brand-foreground lg:h-svh lg:sticky lg:top-0" aria-label="About FloodWatch">
+      <div className="flex flex-col gap-3 px-4 pt-5 pb-4 pr-16 sm:px-8 lg:flex-[2] lg:gap-8 lg:px-12 lg:pt-12 lg:pb-6">
         <span className="flex items-center gap-2.5">
           <span className="grid size-9 place-items-center rounded-lg bg-brand-foreground/15 lg:size-10">
             <Waves className="size-5" aria-hidden />
@@ -63,6 +75,7 @@ function BrandPanel() {
           ))}
         </ul>
       </div>
+      <RainOverCity className="block h-20 w-full shrink-0 sm:h-24 lg:h-auto lg:min-h-40 lg:flex-1" />
     </aside>
   )
 }

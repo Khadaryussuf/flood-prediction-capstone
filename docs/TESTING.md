@@ -591,3 +591,11 @@ changed files: 0 errors; 5 new `only-export-components` warnings (fast-refresh o
 where constants are now exported. SHA-256 of the 228 protected files was the same
 before and after the round. Visual checks used a scratch database on port 5055; the
 server on port 5000, `demo.db` and `.env` were not touched.
+
+### Brand panel polish (login and sign-up)
+
+| Test | Expected | Actual | Corrective action |
+|------|----------|--------|-------------------|
+| Layout, measured in Chromium on `/login` and `/signup` at 360 and 1280 px | The text block ends above the skyline drawing, which takes the bottom third (share 0.31) | Text ends at 166 px / 474 px; skyline starts at 182 px / 624 px. PASSED | None |
+| Motion | Rain streaks and the wave drift run; with `prefers-reduced-motion: reduce` both have no animation | As expected. PASSED | None |
+| Screenshots, both themes | Text never over buildings or rain; rain only in the sky above the roofs; no overflow or console errors | As expected after one fix. PASSED | The first try drew the buildings semi-transparent, so streaks showed through the walls; they are now solid, darker shades of the panel colour |
