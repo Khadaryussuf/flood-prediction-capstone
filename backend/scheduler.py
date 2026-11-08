@@ -32,8 +32,14 @@ def run_once(app):
 
 
 def start(app):
-    """Refresh now, then every hour. Returns the event that stops the thread."""
+    """Refresh now, then every hour. Returns the event that stops the thread.
+
+    Only ever one thread per app: a second call returns the first one's event,
+    so two refreshes can never race each other over the same database."""
+    if "floodwatch_scheduler" in app.extensions:
+        return app.extensions["floodwatch_scheduler"]
     stop = threading.Event()
+    app.extensions["floodwatch_scheduler"] = stop
 
     def loop():
         while not stop.is_set():

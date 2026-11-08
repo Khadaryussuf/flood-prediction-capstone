@@ -50,7 +50,7 @@ Capstone project for ICS 4111.
 Use Python 3.13 (TensorFlow has no 3.14 wheels on Windows). Run from the
 repo root with the venv active.
 - Set up: `py -3.13 -m venv .venv`, `.venv\Scripts\Activate.ps1`,
-  `pip install -r requirements.txt`
+  `pip install -r requirements-dev.txt` (the app's `requirements.txt` plus pytest)
 - Fetch data: `python -m pipeline.fetch_data`
 - Run preprocessing: `python -m pipeline.preprocess`
 - Train model: `python -m pipeline.train`
@@ -63,6 +63,8 @@ repo root with the venv active.
 - Demo accounts: `python -m scripts.seed_demo` (use a scratch `DATABASE_URL`)
 - Start Flask backend: `python -m backend.app` (http://127.0.0.1:5000); starts the
   hourly live-data thread
+- Production server: `python -m backend.wsgi` (waitress, one process, `PORT` default
+  8000, starts the scheduler once; never run several processes). Docker: `Dockerfile`
 - Run tests: `python -m pytest -v` (record results in `docs/TESTING.md`)
 - Demo (server running): `python -m scripts.demo_request` (prompts for a login)
 

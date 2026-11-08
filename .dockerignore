@@ -1,0 +1,38 @@
+# Keep secrets, databases and anything large or local out of the build context.
+# The Dockerfile copies named files only; this is the second line of defence.
+
+# Secrets and local settings
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Databases (the image gets none; the volume holds the live one)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Version control, environments, caches
+.git
+.gitignore
+.venv
+venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.claude
+
+# Not needed at run time (the built web app is already in backend/static/app/)
+frontend
+notebooks
+experiments
+tests
+screenshots
+data/processed
+models/seeds
+models/*.pkl
+!models/scaler.pkl
+docs
+!docs/model_comparison.csv
+!docs/seed_robustness.csv

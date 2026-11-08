@@ -43,10 +43,13 @@ NOT_PAGES = ("/api/", "/static/", "/predict", "/health")
 
 
 class FloodWatchSessionInterface(SecureCookieSessionInterface):
-    """Signed-cookie sessions, marked Secure except on localhost."""
+    """Signed-cookie sessions, marked Secure whenever the request came over HTTPS,
+    and on every host but localhost even over plain HTTP (so the cookie never travels
+    in clear across a network). Behind a proxy that ends TLS, set TRUSTED_PROXIES
+    (backend/app.py) so the proxy's X-Forwarded-Proto and -Host count."""
 
     def get_cookie_secure(self, app):
-        return request.host.rsplit(":", 1)[0].lower() not in LOCALHOST_NAMES
+        return request.is_secure or request.host.rsplit(":", 1)[0].lower() not in LOCALHOST_NAMES
 
 
 def configure_sessions(app, secret_key):

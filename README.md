@@ -15,7 +15,7 @@ Requires **Python 3.13**. TensorFlow 2.21 has no Windows wheels for 3.14.
 ```
 py -3.13 -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # the app plus pytest; a server needs only requirements.txt
 ```
 
 ## Run the pipeline
@@ -38,6 +38,10 @@ copy .env.example .env           # then set SECRET_KEY, as the file explains
 python -m scripts.create_admin   # first administrator; prompts for the password
 python -m backend.app            # http://127.0.0.1:5000
 ```
+
+For a server, `python -m backend.wsgi` serves the same app with waitress on
+`0.0.0.0:8000` (`PORT`, `HOST`) as one process, and starts the hourly refresh once.
+The `Dockerfile` builds an image for it; see `docs/DEVIATIONS.md` for the settings.
 
 The server refuses to start without `SECRET_KEY`. For testing or the defense,
 `python -m scripts.seed_demo` creates 1 administrator and 2 responders, prompting

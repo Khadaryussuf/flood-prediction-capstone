@@ -6,6 +6,7 @@ All times in the tables added for FloodWatch are naive UTC, from utcnow().
 import json
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -13,9 +14,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from backend.env import load_env
 from pipeline import config
 
-# Used when the DATABASE_URL environment variable is not set.
-# The .db file is git-ignored.
+# Used when neither DATABASE_URL nor DATA_DIR is set. The .db file is git-ignored.
 DEFAULT_DATABASE_URL = "sqlite:///" + (config.ROOT / "data" / "predictions.db").as_posix()
+DATA_DIR_DATABASE = "floodwatch.db"  # the file name inside DATA_DIR
 
 ROLE_RESPONDER = "responder"
 ROLE_ADMIN = "admin"
@@ -30,10 +31,23 @@ def utcnow():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
+def configured_url():
+    """DATABASE_URL if set; otherwise DATA_DIR/floodwatch.db if DATA_DIR is set (the
+    folder is created; a container mounts its volume there); otherwise the default."""
+    if os.environ.get("DATABASE_URL"):
+        return os.environ["DATABASE_URL"]
+    data_dir = os.environ.get("DATA_DIR", "").strip()
+    if data_dir:
+        folder = Path(data_dir).resolve()
+        folder.mkdir(parents=True, exist_ok=True)
+        return "sqlite:///" + (folder / DATA_DIR_DATABASE).as_posix()
+    return DEFAULT_DATABASE_URL
+
+
 def make_engine(database_url=None):
     """Connect and create any missing tables. Existing tables aren't altered."""
     load_env()
-    url = database_url or os.environ.get("DATABASE_URL", DEFAULT_DATABASE_URL)
+    url = database_url or configured_url()
     engine = create_engine(url)
     Base.metadata.create_all(engine)
     return engine

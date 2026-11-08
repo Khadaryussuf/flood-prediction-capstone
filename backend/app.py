@@ -32,6 +32,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from flask import Flask, jsonify, redirect, request, send_file
+from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from tensorflow import keras
@@ -155,6 +156,20 @@ def read_comparison():
 
 # ---- App -----------------------------------------------------------------
 
+def trust_proxies(app):
+    """Behind a reverse proxy that ends HTTPS, TRUSTED_PROXIES says how many proxies
+    to believe. Their X-Forwarded-For, -Proto, -Host and -Port headers then give the
+    client's address, the https scheme and the public host, which make the session
+    cookie Secure and build https links (the Google sign-in return address). Unset or
+    0, those headers are ignored, as anyone could send them."""
+    raw = os.environ.get("TRUSTED_PROXIES", "").strip() or "0"
+    if not raw.isdigit():
+        raise RuntimeError(f"TRUSTED_PROXIES must be a whole number of proxies, not {raw!r}")
+    count = int(raw)
+    if count:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=count, x_proto=count, x_host=count, x_port=count)
+
+
 def create_app(model_path=None, scaler_path=None, database_url=None, testing=False):
     """Build the Flask app. Arguments default to the project's real files,
     so tests can pass their own paths and a temporary database. Only tests may
@@ -188,6 +203,7 @@ def create_app(model_path=None, scaler_path=None, database_url=None, testing=Fal
     engine = make_engine(database_url)
 
     app = Flask(__name__)
+    trust_proxies(app)
     app.config["DB_ENGINE"] = engine  # lets tests read the database directly
     app.testing = testing
     security.configure_sessions(app, secret_key)

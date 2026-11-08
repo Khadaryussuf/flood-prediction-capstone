@@ -682,3 +682,32 @@ skyline.
 | Vitest, `brand.test.tsx` (three, `Reflector` and `BufferGeometryUtils` mocked) | Earlier cases still pass; scrim shown only in 3D; every geometry, material, texture, the reflector and the merged city disposed; gives up at 10 fps and keeps going at 60 fps | 12 passed (106 in all). PASSED | None |
 | Browser checks (GPU), `/login` and `/signup`, 360, 800 and 1280 px, both themes, with and without reduced motion | 3D at 800 and 1280 px with motion, drawn otherwise; chunk fetched only then; paused while hidden; CLS 0; no overflow or console errors | As expected. PASSED | None |
 | Screenshots at 360 and 1280 px, both themes, by eye | A city in depth behind the words, wet street below | Towers, windows, aircraft lights and the reflecting street show, after two fixes. Still weak: the towers under the scrim are dim, the landmarks are hard to pick out, the horizon glow is faint. PASSED with notes | The first ripples were far too strong (the reflection turned to noise), so they were cut by about two thirds; the camera was then aimed higher so the towers sit mostly below the scrim |
+
+### Deployment: production entry, Docker, cookies behind a proxy
+
+`waitress==3.0.2` added: released 16 Nov 2024 (well over 14 days), ZPL 2.1, no
+dependencies; all 11 published advisories affect 3.0.1 or earlier. The dry run
+(`pip install waitress==3.0.2 --dry-run`) would install only waitress. `pytest`
+moved to `requirements-dev.txt`. The Docker image uses `tensorflow-cpu==2.21.0`
+(cp313 manylinux x86-64 wheel, 274 MB against 573 MB for `tensorflow`).
+
+`tests/test_wsgi.py`:
+
+| ID | Test | Expected | Actual |
+|----|------|----------|--------|
+| W1 | `python -m backend.wsgi` with no settings | waitress on 0.0.0.0:8000 with 8 threads; scheduler started once | PASSED |
+| W2 | `PORT`, `HOST`, `WAITRESS_THREADS` | Used; `eighty`, `0` or `-1` stop start-up with a message naming the setting | PASSED |
+| W3 | `scheduler.start` called twice on one app | One thread; the second call returns the first's stop event | PASSED |
+| W4 | Fresh database with `DEMO_ADMIN_*` and `DEMO_RESPONDER_*` | Both accounts created active, with audit rows; the admin can log in | PASSED |
+| W5 | Restart with accounts present | Nothing added or changed | PASSED |
+| W6 | No demo settings; then a responder password that breaks the rules | Nothing created and the log says how to add an admin; then start-up stops and nobody is created, not even the valid admin | PASSED |
+| W7 | `DATA_DIR` | Database at `DATA_DIR/floodwatch.db`, folder created; `DATABASE_URL` wins | PASSED |
+| W8 | Session cookie | Secure on https (even localhost) and on other hosts; not on http://localhost | PASSED |
+| W9 | Behind a proxy (forwarded https, app reached as localhost) | Forwarded headers ignored without `TRUSTED_PROXIES`; with it the cookie is Secure; CSRF still refuses a POST without the token | PASSED |
+| W10 | `TRUSTED_PROXIES=yes` | Start-up refused with a clear message | PASSED |
+| W11 | Requirements | waitress pinned in `requirements.txt`, no pytest there; pytest in `requirements-dev.txt`; every runtime line pinned with `==` | PASSED |
+| W12 | `THIRD_PARTY.md` | Every pinned Python package listed with its version and a licence read from its metadata | PASSED |
+
+Not done here: the Docker image was not built or run (Docker isn't installed on this
+machine). A live run of `python -m backend.wsgi` on a scratch port was declined, so the
+entry was tested with waitress and the scheduler replaced by recorders (W1, W2).

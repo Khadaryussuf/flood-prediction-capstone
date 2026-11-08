@@ -55,11 +55,12 @@ def password():
 @pytest.fixture
 def app(tmp_path, monkeypatch):
     """The real app with the real model, but a fresh temporary database. Google
-    sign-in and email are off, whatever the machine's .env says: an empty value wins
-    over it (deleting the variable isn't enough, as create_app reloads .env). Tests
-    that need email set their own settings and a fake SMTP server."""
+    sign-in, email and proxy trust are off, whatever the machine's .env says: an
+    empty value wins over it (deleting the variable isn't enough, as create_app
+    reloads .env). Tests that need email set their own settings and a fake SMTP server."""
     for name in ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URI",
-                 "SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM"):
+                 "SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM",
+                 "TRUSTED_PROXIES"):
         monkeypatch.setenv(name, "")
     app = create_app(database_url=f"sqlite:///{tmp_path.as_posix()}/test.db", testing=True)
     app.test_client_class = ApiClient
