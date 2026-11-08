@@ -10,9 +10,8 @@ import { HEADLINE, PHRASES } from './headlineText'
 // jsdom has no WebGL. three itself is replaced by fakes that record what is made
 // and disposed; the scene module is replaced for the panel tests, and the real one
 // runs against the fake three in the last block.
-const fake = vi.hoisted(() => ({ created: [] as { kind: string; disposed: number; lost: number }[] }))
-
-vi.mock('three', () => {
+const fake = vi.hoisted(() => {
+  const created: { kind: string; disposed: number; lost: number }[] = []
   // A stand-in for anything: every property is another stand-in, every call returns one
   const anything = (): unknown => {
     const target = function () {} as unknown as Record<PropertyKey, unknown>
@@ -27,31 +26,41 @@ vi.mock('three', () => {
     })
     return proxy
   }
-  const kinds = ['WebGLRenderer', 'Scene', 'PerspectiveCamera', 'FogExp2', 'Color', 'CanvasTexture', 'Shape', 'ExtrudeGeometry',
-    'PlaneGeometry', 'RingGeometry', 'InstancedMesh', 'Mesh', 'MeshBasicMaterial', 'MeshLambertMaterial', 'Object3D', 'Group',
-    'HemisphereLight', 'DirectionalLight']
-  const module: Record<string, unknown> = { AdditiveBlending: 2, DynamicDrawUsage: 35048, SRGBColorSpace: 'srgb' }
-  for (const kind of kinds) {
-    module[kind] = class {
-      kind = kind
-      disposed = 0
-      lost = 0
-      constructor() {
-        fake.created.push(this)
-        return new Proxy(this, {
-          get(t, key) {
-            if (key in t) return (t as Record<PropertyKey, unknown>)[key]
-            const value = anything()
-            ;(t as Record<PropertyKey, unknown>)[key] = value
-            return value
-          },
-        })
-      }
-      dispose() { this.disposed++ }
-      forceContextLoss() { this.lost++ }
+  /** A class whose instances record themselves, count dispose calls, and answer
+   *  anything else with a stand-in */
+  const kind = (name: string) => class {
+    kind = name
+    disposed = 0
+    lost = 0
+    constructor() {
+      created.push(this)
+      return new Proxy(this, {
+        get(t, key) {
+          if (key in t) return (t as Record<PropertyKey, unknown>)[key]
+          const value = anything()
+          ;(t as Record<PropertyKey, unknown>)[key] = value
+          return value
+        },
+      })
     }
+    dispose() { this.disposed++ }
+    forceContextLoss() { this.lost++ }
   }
+  return { created, kind }
+})
+
+vi.mock('three', () => {
+  const kinds = ['WebGLRenderer', 'Scene', 'PerspectiveCamera', 'FogExp2', 'Color', 'CanvasTexture', 'BoxGeometry',
+    'CylinderGeometry', 'PlaneGeometry', 'InstancedMesh', 'Mesh', 'MeshBasicMaterial', 'MeshLambertMaterial', 'Object3D',
+    'Sprite', 'SpriteMaterial', 'Vector4', 'HemisphereLight', 'DirectionalLight']
+  const module: Record<string, unknown> = { AdditiveBlending: 2, DynamicDrawUsage: 35048, RepeatWrapping: 1000, SRGBColorSpace: 'srgb' }
+  for (const name of kinds) module[name] = fake.kind(name)
   return module
+})
+vi.mock('three/examples/jsm/objects/Reflector.js', () => ({ Reflector: fake.kind('Reflector') }))
+vi.mock('three/examples/jsm/utils/BufferGeometryUtils.js', () => {
+  const Merged = fake.kind('MergedGeometry')
+  return { mergeGeometries: () => new Merged() }
 })
 
 const scene = vi.hoisted(() => ({ start: vi.fn(), dispose: vi.fn(), real: false }))
@@ -122,8 +131,11 @@ describe('brand panel picture: the 3D city or the drawn fallback', () => {
     expect(canvas).toBe(screen.getByTestId('city-scene'))
     expect(options.pointerArea).toBe(panel())
     expect(panel()).toHaveAttribute('data-scene', 'loading')
+    expect(screen.queryByTestId('scene-scrim')).not.toBeInTheDocument()
     act(() => options.onReady())
     expect(panel()).toHaveAttribute('data-scene', '3d')
+    // The scene fills the panel; a scrim keeps the words readable over it
+    expect(screen.getByTestId('scene-scrim')).toBeInTheDocument()
     // The fallback's box stays, so nothing moves when the picture switches
     expect(panel().querySelector(':scope > svg')).toBeInTheDocument()
     unmount()
@@ -182,6 +194,28 @@ describe('headline', () => {
 })
 
 describe('the three.js scene itself (three mocked)', () => {
+  /** Runs the scene's frame loop by hand, a frame every `ms` milliseconds */
+  async function runFrames(ms: number, seconds: number) {
+    scene.real = true
+    browser({})
+    const frames: FrameRequestCallback[] = []
+    vi.stubGlobal('requestAnimationFrame', vi.fn((callback: FrameRequestCallback) => frames.push(callback)))
+    vi.stubGlobal('cancelAnimationFrame', vi.fn())
+    const { startCityScene } = await import('./CityScene')
+    const onLost = vi.fn()
+    startCityScene(document.createElement('canvas'), { onLost })
+    for (let t = 0, i = 0; t <= seconds * 1000 && frames[i]; t += ms, i++) frames[i](t)
+    return onLost
+  }
+
+  it('gives up (and the panel shows the drawn skyline) on a device too slow to draw it smoothly', async () => {
+    expect(await runFrames(100, 4)).toHaveBeenCalledTimes(1) // 10 frames a second
+  })
+
+  it('keeps going on a device that draws it smoothly', async () => {
+    expect(await runFrames(16, 4)).not.toHaveBeenCalled() // 60 frames a second
+  })
+
   it('draws, pauses while the tab is hidden, and disposes every GPU resource', async () => {
     scene.real = true
     browser({})
@@ -205,8 +239,9 @@ describe('the three.js scene itself (three mocked)', () => {
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => false })
 
     city.dispose()
-    const gpu = fake.created.filter((thing) => /Geometry|Material|Texture|InstancedMesh/.test(thing.kind))
+    const gpu = fake.created.filter((thing) => /Geometry|Material|Texture|InstancedMesh|Reflector/.test(thing.kind))
     expect(gpu.length).toBeGreaterThan(10)
+    expect(gpu.map((thing) => thing.kind)).toEqual(expect.arrayContaining(['Reflector', 'MergedGeometry', 'BoxGeometry', 'CylinderGeometry', 'SpriteMaterial']))
     expect(gpu.filter((thing) => thing.disposed === 0).map((thing) => thing.kind)).toEqual([])
     const renderer = fake.created.find((thing) => thing.kind === 'WebGLRenderer')!
     expect(renderer.disposed).toBe(1)

@@ -107,6 +107,7 @@
     --brand-foreground: #FFFFFF;
     --brand-muted: #BFDDE7;
     --brand-accent: #67E8F9;
+    --brand-window: #FCD9A0; /* lit windows in the 3D city */
 }
 
 .dark {
@@ -151,6 +152,7 @@
     --brand-foreground: #E6EDF5;
     --brand-muted: #A3C4D1;
     --brand-accent: #22D3EE;
+    --brand-window: #FCD9A0; /* lit windows in the 3D city */
 }
 
 @layer base {
@@ -236,6 +238,24 @@
 @keyframes fw-rise-in {
   from { opacity: 0; translate: 0 12px; }
   to { opacity: 1; translate: 0 0; }
+}
+
+/* Over the 3D city (the panel's data-scene="3d"), a scrim behind the words keeps
+   them readable whatever is behind: at least 70% of the night sky's top colour down
+   to below the feature cards, fading out over the street. The cards get a darker
+   glass. scripts/contrast.mjs checks text over a lit window under both. */
+.fw-scrim {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--brand-sky-top) 76%, transparent) 0%,
+    color-mix(in srgb, var(--brand-sky-top) 70%, transparent) 66%,
+    transparent 86%);
+}
+[data-scene='3d'] .fw-glass {
+  background: color-mix(in srgb, var(--brand-sky-top) 45%, transparent);
+  border-color: color-mix(in srgb, var(--brand-foreground) 16%, transparent);
+}
+[data-scene='3d'] .fw-headline {
+  text-shadow: 0 2px 18px color-mix(in srgb, var(--brand-sky-top) 80%, transparent);
 }
 
 /* The three features: glass cards that lean toward the cursor, with the edge lit

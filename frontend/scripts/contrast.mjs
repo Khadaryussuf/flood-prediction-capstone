@@ -62,6 +62,11 @@ const PAIRS = [
   ['brand-accent', 'brand-sky-top', 4.5],
   ['brand-accent', 'brand', 4.5],
   ['brand-accent', 'brand-sky-bottom', 4.5],
+  // Over the 3D city: text under the scrim with a lit window right behind it
+  ['brand-foreground', 'scrim over a window', 4.5],
+  ['brand-muted', 'scrim over a window', 4.5],
+  ['brand-accent', 'scrim over a window', 3], // the headline's key words: large text
+  ['brand-muted', '3D glass card over a window', 4.5],
   // The frosted form card, over the brightest part of the light behind it
   ['card-foreground', 'frosted card', 4.5],
   ['muted-foreground', 'frosted card', 4.5],
@@ -74,6 +79,8 @@ const PAIRS = [
 const SURFACES = {
   'sky glow': (t) => mix(t['brand-sky-bottom'], t['brand-accent'], 0.12),
   'glass card': (t) => mix(t['brand-sky-bottom'], t['brand-foreground'], 0.10),
+  'scrim over a window': (t) => mix(t['brand-window'], t['brand-sky-top'], 0.7),
+  '3D glass card over a window': (t) => mix(mix(t['brand-window'], t['brand-sky-top'], 0.7), t['brand-sky-top'], 0.45),
   'frosted card': (t, dark) => mix(t.card, mix(t.background, t.primary, dark ? 0.16 : 0.22), 0.28),
 }
 

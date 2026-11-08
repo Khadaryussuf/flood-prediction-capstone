@@ -654,3 +654,31 @@ lockfile). Types are a small local declaration (`src/types/three.d.ts`) instead 
 | Test | Expected | Actual | Corrective action |
 |------|----------|--------|-------------------|
 | Full `pytest` run with SMTP settings present in `.env` | Tests never use the real mail account; 4 alert tests expect "not sent: email not configured" | 4 failed (status `sent`), 203 passed: `create_app` reloaded `.env` after the alert tests' fixture had deleted the SMTP variables, so a few test alerts went through the real account to made-up `example.org` addresses. FAILED | `tests/conftest.py` now sets all five SMTP variables to empty values, as it already did for Google sign-in (an empty value wins over `.env`). Rerun: 207 passed, 0 failed. PASSED |
+
+### Login and sign-up: 3D city, rebuilt
+
+Reported: on the user's server the panel's bottom still looked like the old flat
+skyline. Diagnosis on the scratch server (port 5055) in headless Chromium: with WebGL
+(SwiftShader, and the machine's AMD GPU) the three.js chunk loads, `data-scene` is
+`3d` and the canvas renders; only with the GPU disabled does it fall back, as designed.
+Both servers serve the same `backend/static/app/index.html`. The cause was the scene
+itself: uniform boxes, few windows, flat light, so it read as the drawn skyline.
+
+Rebuilt (`frontend/src/pages/brand/CityScene.ts`, three 0.186.1, no new packages; it
+also uses three's own `Reflector` and `BufferGeometryUtils`): the scene now fills the
+whole panel behind the words. An avenue runs between four rows of towers (setbacks,
+antennas, one merged mesh with a window texture), with two generic landmarks (a round
+tower with a saucer crown, and a slender spire with a lit lantern), fog, a horizon glow,
+red aircraft lights pulsing at 0.5 Hz, rain, and a wet street with a real reflection
+that ripples where drops land. The camera drifts in and out, sways, and follows a
+mouse. A scrim behind the words (only in 3D) keeps text contrast. If the device can't
+draw 20 frames a second over the first 3 seconds, the panel switches to the drawn
+skyline.
+
+| Test | Expected | Actual | Corrective action |
+|------|----------|--------|-------------------|
+| Frame rate, 1280×900 | Smooth on a real GPU | 60 fps on the AMD GPU; 3–5 fps on SwiftShader. PASSED | SwiftShader was too slow, and its screenshot showed a stale frame: added the 20 fps fallback, and `scripts/screenshots.mjs` now uses the GPU (`FW_SOFTWARE_GL=1` forces SwiftShader) |
+| `npm run contrast`, now with text over a lit window (`--brand-window`) under the scrim and under the 3D glass cards | Small text 4.5:1; the large key words 3:1 | Lowest 4.78:1 (brand-muted, dark theme). PASSED | None |
+| Vitest, `brand.test.tsx` (three, `Reflector` and `BufferGeometryUtils` mocked) | Earlier cases still pass; scrim shown only in 3D; every geometry, material, texture, the reflector and the merged city disposed; gives up at 10 fps and keeps going at 60 fps | 12 passed (106 in all). PASSED | None |
+| Browser checks (GPU), `/login` and `/signup`, 360, 800 and 1280 px, both themes, with and without reduced motion | 3D at 800 and 1280 px with motion, drawn otherwise; chunk fetched only then; paused while hidden; CLS 0; no overflow or console errors | As expected. PASSED | None |
+| Screenshots at 360 and 1280 px, both themes, by eye | A city in depth behind the words, wet street below | Towers, windows, aircraft lights and the reflecting street show, after two fixes. Still weak: the towers under the scrim are dim, the landmarks are hard to pick out, the horizon glow is faint. PASSED with notes | The first ripples were far too strong (the reflection turned to noise), so they were cut by about two thirds; the camera was then aimed higher so the towers sit mostly below the scrim |

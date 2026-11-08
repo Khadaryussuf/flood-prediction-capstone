@@ -42,15 +42,16 @@ function BrandPanel() {
   const { mode, canvasRef } = useCityScene(panel)
   return (
     // A dark sky in both themes. Two boxes, one above the other: the words, then the
-    // picture's box (the bottom third on wide screens). The picture is the 3D city when
-    // it can run; otherwise the drawn skyline with canvas rain. Either way it sits under
-    // the words, and the boxes never change size, so nothing moves when it switches.
+    // drawn skyline's box (the bottom third on wide screens). When the 3D city can run,
+    // it fills the whole panel behind the words, with a scrim keeping them readable,
+    // and the skyline's box stays as an empty spacer, so nothing moves when it switches.
     <aside ref={panel} data-scene={mode} className="fw-sky relative isolate flex flex-col overflow-hidden text-brand-foreground lg:sticky lg:top-0 lg:h-svh" aria-label="About FloodWatch">
       {mode !== '3d' && <RainCanvas skyline={skyline} className="pointer-events-none absolute inset-0 z-[1] size-full" />}
       {mode !== 'css' && (
         <canvas ref={canvasRef} aria-hidden data-testid="city-scene"
           className={cn('pointer-events-none absolute inset-0 z-[1] size-full transition-opacity duration-1000', mode === '3d' ? 'opacity-100' : 'opacity-0')} />
       )}
+      {mode === '3d' && <div className="fw-scrim pointer-events-none absolute inset-0 z-[1]" aria-hidden data-testid="scene-scrim" />}
       <div className="relative z-[2] flex flex-col gap-3 px-4 pt-5 pr-20 pb-3 sm:px-8 sm:pr-24 lg:flex-[2] lg:gap-7 lg:px-12 lg:pt-12 lg:pb-6">
         <span className="flex items-center gap-2.5">
           <span className="grid size-9 place-items-center rounded-lg border border-brand-foreground/20 bg-brand-foreground/10 lg:size-10">

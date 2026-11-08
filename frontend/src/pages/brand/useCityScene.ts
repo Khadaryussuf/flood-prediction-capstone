@@ -60,11 +60,6 @@ export function useCityScene(pointerArea: RefObject<HTMLElement | null>) {
         if (cancelled) return
         scene = startCityScene(canvas, {
           pointerArea: pointerArea.current,
-          cityTop: () => {
-            const area = pointerArea.current?.getBoundingClientRect()
-            const box = pointerArea.current?.querySelector(':scope > svg')?.getBoundingClientRect()
-            return area && box && area.height ? (box.top - area.top) / area.height : 0.64
-          },
           onReady: () => setReady(true),
           onLost: () => setFailed(true),
         })
