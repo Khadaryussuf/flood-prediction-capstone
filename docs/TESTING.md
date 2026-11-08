@@ -648,3 +648,9 @@ lockfile). Types are a small local declaration (`src/types/three.d.ts`) instead 
 | Headless Chromium with software WebGL (SwiftShader), `/login` and `/signup`, at 360, 800 and 1280 px, both themes, with and without reduced motion | 3D at 800 and 1280 px with motion, the drawn version otherwise; the three.js chunk fetched only then; no rendering while the tab is hidden, resumes when shown; no layout shift; no overflow; no console errors | As expected: 0 frames while hidden; CLS 0. PASSED | My first pause check compared element screenshots, which also capture the CSS-animated text over the canvas; it now counts animation frames |
 | Screenshots at 360 and 1280 px, both themes, opened and checked by eye | Towers in the bottom third, never behind the words; reflections and splashes on the street; Google button above "or with email" | As expected after two fixes. PASSED | The towers first rose behind the feature cards, and the street didn't show; the camera was moved back and lowered. At 1280×800 the city then still reached the cards, so the picture now shifts down to start at the skyline box's top |
 | `npm run contrast`, with the accent key words checked as text on the sky | At least 4.5:1 | Lowest 6.69:1. PASSED | None |
+
+### Tests and the machine's email settings
+
+| Test | Expected | Actual | Corrective action |
+|------|----------|--------|-------------------|
+| Full `pytest` run with SMTP settings present in `.env` | Tests never use the real mail account; 4 alert tests expect "not sent: email not configured" | 4 failed (status `sent`), 203 passed: `create_app` reloaded `.env` after the alert tests' fixture had deleted the SMTP variables, so a few test alerts went through the real account to made-up `example.org` addresses. FAILED | `tests/conftest.py` now sets all five SMTP variables to empty values, as it already did for Google sign-in (an empty value wins over `.env`). Rerun: 207 passed, 0 failed. PASSED |
