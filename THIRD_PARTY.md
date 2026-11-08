@@ -52,6 +52,7 @@ built CSS file. `shadcn` is a development dependency because only the build read
 | `recharts` | 3.10.1 | MIT | https://www.npmjs.com/package/recharts |
 | `tailwind-merge` | 3.7.0 | MIT | https://www.npmjs.com/package/tailwind-merge |
 | `tailwindcss` | 4.3.3 | MIT | https://www.npmjs.com/package/tailwindcss |
+| `three` | 0.186.1 | MIT | https://www.npmjs.com/package/three |
 | `tw-animate-css` | 1.4.0 | MIT | https://www.npmjs.com/package/tw-animate-css |
 
 ## Direct development tools
@@ -80,7 +81,7 @@ cache, outside this repository, for the screenshot script; it isn't redistribute
 ## Full production dependency tree
 
 Every package in the lockfile that isn't development-only, including what the direct dependencies pull
-in (160 packages; 50 optional platform binaries left out).
+in (161 packages; 50 optional platform binaries left out).
 
 | Package | Version | Licence | Source |
 |---|---|---|---|
@@ -234,6 +235,7 @@ in (160 packages; 50 optional platform binaries left out).
 | `tailwind-merge` | 3.7.0 | MIT | https://www.npmjs.com/package/tailwind-merge |
 | `tailwindcss` | 4.3.3 | MIT | https://www.npmjs.com/package/tailwindcss |
 | `tapable` | 2.3.3 | MIT | https://www.npmjs.com/package/tapable |
+| `three` | 0.186.1 | MIT | https://www.npmjs.com/package/three |
 | `tiny-invariant` | 1.3.3 | MIT | https://www.npmjs.com/package/tiny-invariant |
 | `tinyglobby` | 0.2.17 | MIT | https://www.npmjs.com/package/tinyglobby |
 | `tslib` | 2.8.1 | 0BSD | https://www.npmjs.com/package/tslib |

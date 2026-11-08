@@ -619,3 +619,32 @@ against a scratch server on port 5055, with dummy Google settings on that server
 | Hover, 1280 px dark | A headline word lifts 4 px and turns the accent colour; a feature card tilts and lights its edge near the cursor | As expected. PASSED | None |
 | Screenshots at 360 and 1280 px, both themes, opened and checked by eye | Skyline clearly visible with lit windows and a horizon glow; frosted card on a gradient; Google button above "or with email"; Name and Organisation side by side on wide screens | As expected after one fix. PASSED | At 360 px the tallest back towers were cut flat at the top of the skyline box; the top of that box now fades out on small screens |
 | Vitest; `pytest tests/test_dashboard.py` | All pass | 94 passed; 16 passed. PASSED | None |
+
+### Login and sign-up: 3D city scene
+
+The brand panel's picture is now a three.js scene (`frontend/src/pages/brand/CityScene.ts`):
+generic low-poly towers on a wet, reflective street, with fog, warm windows, a cyan
+horizon glow, instanced rain in front of and behind the towers, and splashes. The
+camera drifts and a mouse adds parallax (touch: drift only). Nothing flashes. The
+headline's letters rise in on load; the middle line then flips between "heavy rain is",
+"rising rivers are" and "flash floods are" (each phrase carries its verb so the sentence
+stays grammatical). Screen readers get the full headline once from the heading's label.
+The drawn skyline with canvas rain stays as the fallback: no WebGL, reduced motion, or
+under 640 px.
+
+Dependency: `three` 0.186.1, pinned, MIT, no dependencies of its own. It was the
+newest release at least 14 days old (published 24 Sep 2026; 0.187.0 was 9 days old). Its
+two published advisories cover versions below 0.137.0 and do not apply. The dry run added only
+`three` (the other lines were other platforms' optional binaries already in the
+lockfile). Types are a small local declaration (`src/types/three.d.ts`) instead of
+`@types/three`, which would add seven packages.
+
+| Test | Expected | Actual | Corrective action |
+|------|----------|--------|-------------------|
+| `npm audit --omit=dev` | 0 vulnerabilities | 0. PASSED | None |
+| `npm run third-party`; T38, T39 (`pytest tests/test_dashboard.py`) | `three` listed with its licence; tests pass | Listed (MIT); 16 passed. PASSED | None |
+| Bundle size (`npm run build`) | three.js kept out of the first load | Main bundle 1,075.01 → 1,079.53 kB (+4.52 kB; gzip +1.57 kB). three.js is its own chunk, 565.92 kB (143.20 kB gzip), fetched only when the scene runs. PASSED | None |
+| Vitest, `src/pages/brand/brand.test.tsx`, three mocked | Fallback when reduced motion is set, under 640 px, or without WebGL (scene never loaded); scene starts on the panel's canvas, switches in after its first frame, disposes on unmount; falls back if the WebGL context is lost; the form, focus and Google button unchanged; heading label is the full headline with the visible letters hidden; key words cycle, and stay still under reduced motion; the scene pauses while hidden and disposes every geometry, material, texture and instanced mesh, plus the renderer | 10 passed (104 in all). PASSED | None |
+| Headless Chromium with software WebGL (SwiftShader), `/login` and `/signup`, at 360, 800 and 1280 px, both themes, with and without reduced motion | 3D at 800 and 1280 px with motion, the drawn version otherwise; the three.js chunk fetched only then; no rendering while the tab is hidden, resumes when shown; no layout shift; no overflow; no console errors | As expected: 0 frames while hidden; CLS 0. PASSED | My first pause check compared element screenshots, which also capture the CSS-animated text over the canvas; it now counts animation frames |
+| Screenshots at 360 and 1280 px, both themes, opened and checked by eye | Towers in the bottom third, never behind the words; reflections and splashes on the street; Google button above "or with email" | As expected after two fixes. PASSED | The towers first rose behind the feature cards, and the street didn't show; the camera was moved back and lowered. At 1280×800 the city then still reached the cards, so the picture now shifts down to start at the skyline box's top |
+| `npm run contrast`, with the accent key words checked as text on the sky | At least 4.5:1 | Lowest 6.69:1. PASSED | None |

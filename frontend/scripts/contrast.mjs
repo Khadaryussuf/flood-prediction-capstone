@@ -58,6 +58,10 @@ const PAIRS = [
   ['brand-muted', 'brand-sky-bottom', 4.5],
   ['brand-muted', 'sky glow', 4.5],
   ['brand-muted', 'glass card', 4.5],
+  // The headline's cycling key words are accent-coloured text
+  ['brand-accent', 'brand-sky-top', 4.5],
+  ['brand-accent', 'brand', 4.5],
+  ['brand-accent', 'brand-sky-bottom', 4.5],
   // The frosted form card, over the brightest part of the light behind it
   ['card-foreground', 'frosted card', 4.5],
   ['muted-foreground', 'frosted card', 4.5],

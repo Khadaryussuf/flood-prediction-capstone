@@ -17,8 +17,9 @@ mkdirSync(outDir, { recursive: true })
 const PUBLIC = new Set(['/login', '/signup'])
 
 // channel 'chromium' is the full browser, still headless. It avoids needing
-// Playwright's separate headless-shell download.
-const browser = await chromium.launch({ channel: 'chromium' })
+// Playwright's separate headless-shell download. The flags give it software WebGL
+// (SwiftShader), so the login page's 3D scene renders without a GPU.
+const browser = await chromium.launch({ channel: 'chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
 try {
   for (const path of paths) {
     for (const width of [360, 1280]) {

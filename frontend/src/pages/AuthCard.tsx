@@ -1,4 +1,4 @@
-import { forwardRef, useId, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react'
+import { useId, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react'
 import { Bell, CloudRain, Eye, EyeOff, Map as MapIcon, Waves } from 'lucide-react'
 
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -6,85 +6,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/auth'
 import { cn } from '@/lib/utils'
+import { Headline } from './brand/Headline'
+import { Skyline } from './brand/Skyline'
+import { useCityScene } from './brand/useCityScene'
 import { RainCanvas } from './RainCanvas'
 
-/** Blocks of buildings for one layer of the skyline, the same on every load */
-function blocks(seed: number, minHeight: number, maxHeight: number, minWidth: number, maxWidth: number) {
-  let state = seed
-  const next = () => ((state = (state * 16807) % 2147483647) / 2147483647)
-  const list: { x: number; width: number; height: number }[] = []
-  for (let x = 0; x < 400;) {
-    const width = Math.round(minWidth + next() * (maxWidth - minWidth))
-    list.push({ x, width, height: Math.round(minHeight + next() ** 1.4 * (maxHeight - minHeight)) })
-    x += width
-  }
-  const d = 'M0 186' + list.map(({ x, width, height }) => `V${186 - height}H${Math.min(400, x + width)}`).join('') + 'V186Z'
-  return { d, list, next }
-}
-
-const FAR = blocks(7, 34, 104, 10, 22)
-const MID = blocks(41, 22, 74, 14, 30)
-const NEAR = blocks(97, 10, 44, 18, 38)
-// A few softly lit windows on the nearer layers; some flicker slowly
-const WINDOWS = [MID, NEAR].flatMap((layer, depth) =>
-  layer.list.flatMap(({ x, width, height }) => {
-    if (layer.next() > 0.55 || width < 14) return []
-    const count = 1 + Math.floor(layer.next() * 2)
-    return Array.from({ length: count }, () => ({
-      x: x + 3 + Math.floor(layer.next() * (width - 8)),
-      y: 186 - height + 5 + Math.floor(layer.next() * Math.max(1, height - 14)),
-      flicker: layer.next() < 0.3,
-      bright: depth === 1,
-    }))
-  }))
-
-/** A city skyline at dusk: three layers of generic towers (not a map of real
- *  buildings) against a glow along the horizon, standing in a strip of water.
- *  Drawn here, so nothing is downloaded; it is a box of its own below the words. */
-const Skyline = forwardRef<SVGSVGElement, { className?: string }>(function Skyline({ className }, ref) {
-  const wave = 'M0 190 q50 -5 100 0' + ' t100 0'.repeat(7)
-  return (
-    <svg ref={ref} viewBox="0 0 400 200" className={className} aria-hidden focusable="false" preserveAspectRatio="xMidYMax slice">
-      <defs>
-        <linearGradient id="fw-horizon" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" style={{ stopColor: 'var(--brand-accent)', stopOpacity: 0 }} />
-          <stop offset="1" style={{ stopColor: 'var(--brand-accent)', stopOpacity: 0.5 }} />
-        </linearGradient>
-        <linearGradient id="fw-water" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" style={{ stopColor: 'color-mix(in srgb, var(--brand-sky-bottom), var(--brand-accent) 28%)' }} />
-          <stop offset="1" style={{ stopColor: 'var(--brand-sky-top)' }} />
-        </linearGradient>
-        <filter id="fw-glow" x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur stdDeviation="1.4" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
-      <rect x="0" y="110" width="400" height="76" fill="url(#fw-horizon)" />
-      <path d={FAR.d} style={{ fill: 'color-mix(in srgb, var(--brand-sky-bottom), var(--brand-accent) 30%)' }} opacity="0.6" />
-      <path d={MID.d} style={{ fill: 'color-mix(in srgb, var(--brand-sky-bottom), white 14%)' }} />
-      <path d={NEAR.d} style={{ fill: 'color-mix(in srgb, var(--brand-sky-top), var(--brand-sky-bottom) 55%)', stroke: 'var(--brand-accent)' }}
-        strokeOpacity="0.3" strokeWidth="0.6" />
-      <g filter="url(#fw-glow)">
-        {WINDOWS.map(({ x, y, flicker, bright }, i) => (
-          <rect key={i} x={x} y={y} width="2.6" height="3.4" rx="0.4" fill="#FCD9A0"
-            opacity={bright ? 0.85 : 0.6} className={flicker ? 'fw-window' : undefined}
-            style={flicker ? { animationDelay: `${-(i % 7)}s` } : undefined} />
-        ))}
-      </g>
-      <rect x="0" y="186" width="400" height="14" fill="url(#fw-water)" />
-      <g className="fw-wave" style={{ color: 'var(--brand-accent)' }}>
-        <path stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.55" d={wave} />
-      </g>
-    </svg>
-  )
-})
-
-const HEADLINE = 'Know when heavy rain is coming to Nairobi.'
-
+/** The three features. Each card floats at its own depth (px toward the viewer). */
 const POINTS = [
-  { Icon: CloudRain, text: 'Hourly rainfall-intensity risk for Nairobi, from a model trained on five years of weather data' },
-  { Icon: Bell, text: 'Alerts in the app and by email when Medium or High is predicted' },
-  { Icon: MapIcon, text: 'A city map with the forecast rainfall around it' },
+  { Icon: CloudRain, text: 'Hourly rainfall-intensity risk for Nairobi, from a model trained on five years of weather data', depth: 26 },
+  { Icon: Bell, text: 'Alerts in the app and by email when Medium or High is predicted', depth: 6 },
+  { Icon: MapIcon, text: 'A city map with the forecast rainfall around it', depth: 16 },
 ]
 
 const wantsMotion = () => typeof window.matchMedia === 'function' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -98,20 +29,28 @@ function tilt(event: PointerEvent<HTMLElement>) {
   const y = (event.clientY - box.top) / box.height
   card.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`)
   card.style.setProperty('--my', `${(y * 100).toFixed(1)}%`)
-  card.style.setProperty('--ry', `${((x - 0.5) * 7).toFixed(2)}deg`)
-  card.style.setProperty('--rx', `${((0.5 - y) * 7).toFixed(2)}deg`)
+  card.style.setProperty('--ry', `${((x - 0.5) * 8).toFixed(2)}deg`)
+  card.style.setProperty('--rx', `${((0.5 - y) * 8).toFixed(2)}deg`)
 }
 function untilt(event: PointerEvent<HTMLElement>) {
   for (const name of ['--rx', '--ry']) event.currentTarget.style.setProperty(name, '0deg')
 }
 
 function BrandPanel() {
+  const panel = useRef<HTMLElement>(null)
   const skyline = useRef<SVGSVGElement>(null)
+  const { mode, canvasRef } = useCityScene(panel)
   return (
     // A dark sky in both themes. Two boxes, one above the other: the words, then the
-    // skyline (the bottom third on wide screens). The rain canvas spans both, under the words.
-    <aside className="fw-sky relative isolate flex flex-col overflow-hidden text-brand-foreground lg:sticky lg:top-0 lg:h-svh" aria-label="About FloodWatch">
-      <RainCanvas skyline={skyline} className="pointer-events-none absolute inset-0 z-[1] size-full" />
+    // picture's box (the bottom third on wide screens). The picture is the 3D city when
+    // it can run; otherwise the drawn skyline with canvas rain. Either way it sits under
+    // the words, and the boxes never change size, so nothing moves when it switches.
+    <aside ref={panel} data-scene={mode} className="fw-sky relative isolate flex flex-col overflow-hidden text-brand-foreground lg:sticky lg:top-0 lg:h-svh" aria-label="About FloodWatch">
+      {mode !== '3d' && <RainCanvas skyline={skyline} className="pointer-events-none absolute inset-0 z-[1] size-full" />}
+      {mode !== 'css' && (
+        <canvas ref={canvasRef} aria-hidden data-testid="city-scene"
+          className={cn('pointer-events-none absolute inset-0 z-[1] size-full transition-opacity duration-1000', mode === '3d' ? 'opacity-100' : 'opacity-0')} />
+      )}
       <div className="relative z-[2] flex flex-col gap-3 px-4 pt-5 pr-20 pb-3 sm:px-8 sm:pr-24 lg:flex-[2] lg:gap-7 lg:px-12 lg:pt-12 lg:pb-6">
         <span className="flex items-center gap-2.5">
           <span className="grid size-9 place-items-center rounded-lg border border-brand-foreground/20 bg-brand-foreground/10 lg:size-10">
@@ -119,31 +58,29 @@ function BrandPanel() {
           </span>
           <span className="text-lg font-semibold lg:text-xl">FloodWatch</span>
         </span>
-        <div className="flex max-w-lg flex-col gap-2 lg:mt-6 lg:gap-4">
-          <p className="fw-headline text-xl leading-tight font-semibold text-balance sm:text-2xl lg:text-[2.6rem] lg:leading-[1.1]">
-            {HEADLINE.split(' ').map((word, i) => (
-              <span key={i}>
-                <span className="fw-word" style={{ '--i': i } as CSSProperties}>{word}</span>{' '}
-              </span>
-            ))}
-          </p>
-          <p className="fw-rise text-sm text-brand-muted lg:text-base" style={{ '--i': 8 } as CSSProperties}>
+        <div className="flex max-w-lg flex-col gap-2 lg:mt-4 lg:gap-4">
+          <Headline className="text-xl leading-tight font-semibold sm:text-2xl lg:text-[2.6rem] lg:leading-[1.1]" />
+          <p className="fw-rise text-sm text-brand-muted lg:text-base" style={{ '--i': 9 } as CSSProperties}>
             For county responders and their administrators.
           </p>
         </div>
         <ul className="hidden max-w-md flex-col gap-3 lg:flex">
-          {POINTS.map(({ Icon, text }, i) => (
-            <li key={text} className="fw-glass fw-rise flex items-start gap-3 rounded-xl px-4 py-3 text-sm text-brand-muted"
-              style={{ '--i': 10 + i } as CSSProperties} onPointerMove={tilt} onPointerLeave={untilt}>
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-accent/15">
-                <Icon className="size-4 text-brand-accent" aria-hidden />
-              </span>
-              <span className="pt-1.5">{text}</span>
+          {POINTS.map(({ Icon, text, depth }, i) => (
+            <li key={text} className="fw-rise" style={{ '--i': 11 + i } as CSSProperties}>
+              <div className="fw-glass fw-float flex items-start gap-3 rounded-xl px-4 py-3 text-sm text-brand-muted"
+                style={{ '--z': `${depth}px`, '--float-delay': `${-i * 1.7}s` } as CSSProperties}
+                onPointerMove={tilt} onPointerLeave={untilt}>
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-accent/15">
+                  <Icon className="size-4 text-brand-accent" aria-hidden />
+                </span>
+                <span className="pt-1.5">{text}</span>
+              </div>
             </li>
           ))}
         </ul>
       </div>
-      <Skyline ref={skyline} className="relative z-0 block h-24 w-full shrink-0 [mask-image:linear-gradient(to_bottom,transparent,#000_45%)] sm:h-28 lg:h-auto lg:min-h-40 lg:flex-1 lg:[mask-image:none]" />
+      <Skyline ref={skyline} className={cn('relative z-0 block h-24 w-full shrink-0 transition-opacity duration-1000 [mask-image:linear-gradient(to_bottom,transparent,#000_45%)] sm:h-28 lg:h-auto lg:min-h-40 lg:flex-1 lg:[mask-image:none]',
+        mode === '3d' && 'opacity-0')} />
     </aside>
   )
 }
