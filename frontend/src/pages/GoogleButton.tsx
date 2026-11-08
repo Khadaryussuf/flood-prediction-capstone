@@ -22,7 +22,7 @@ export function GoogleButton() {
     <div className="flex flex-col gap-4">
       <a
         href="/api/auth/google/login"
-        className="inline-flex h-10 items-center justify-center gap-3 rounded-md border border-input bg-card px-4 text-sm font-medium text-card-foreground shadow-xs transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className="inline-flex h-10 items-center justify-center gap-3 rounded-md border border-input bg-background/70 px-4 text-sm font-medium text-card-foreground shadow-xs transition-colors hover:bg-muted dark:bg-background/50 dark:hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         <GoogleMark />
         Continue with Google

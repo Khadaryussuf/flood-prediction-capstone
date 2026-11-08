@@ -87,7 +87,7 @@ export function SignupPage() {
   return (
     <AuthCard title="Request an account" description="An administrator approves each new responder account.">
       <GoogleButton />
-      <form onSubmit={submit} className="flex flex-col gap-4">
+      <form onSubmit={submit} className="flex flex-col gap-3">
         {error && (
           <Alert variant="destructive" role="alert">
             <AlertTriangle aria-hidden />
@@ -95,17 +95,20 @@ export function SignupPage() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <Field label="Name" id="name" autoComplete="name" required value={form.name} onChange={set('name')}
-          error={fieldErrors.name} />
+        {/* Name and Organisation side by side from 640 px up, so the form fits a laptop screen */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Name" id="name" autoComplete="name" required value={form.name} onChange={set('name')}
+            error={fieldErrors.name} />
+          <Field label="Organisation" id="organisation" autoComplete="organization" required value={form.organisation} onChange={set('organisation')} />
+        </div>
         <Field label="Email" id="email" type="email" autoComplete="email" required value={form.email} onChange={set('email')}
           error={fieldErrors.email} />
-        <Field label="Organisation" id="organisation" autoComplete="organization" required value={form.organisation} onChange={set('organisation')} />
         <PasswordField label="Password" id="password" autoComplete="new-password" required minLength={MIN_PASSWORD}
           hint={`At least ${MIN_PASSWORD} characters, and not your email.`} value={form.password} onChange={set('password')}
           error={fieldErrors.password} />
         <PasswordField label="Confirm password" id="confirm" autoComplete="new-password" required
           value={form.confirm_password} onChange={set('confirm_password')} error={fieldErrors.confirm_password} />
-        <Button type="submit" size="lg" className="h-10" disabled={busy}>{busy ? 'Sending…' : 'Request account'}</Button>
+        <Button type="submit" size="lg" className="fw-shimmer mt-1 h-10" disabled={busy}>{busy ? 'Sending…' : 'Request account'}</Button>
       </form>
       <p className="text-center text-sm text-muted-foreground">Already registered? {LOGIN_LINK}</p>
     </AuthCard>

@@ -599,3 +599,23 @@ server on port 5000, `demo.db` and `.env` were not touched.
 | Layout, measured in Chromium on `/login` and `/signup` at 360 and 1280 px | The text block ends above the skyline drawing, which takes the bottom third (share 0.31) | Text ends at 166 px / 474 px; skyline starts at 182 px / 624 px. PASSED | None |
 | Motion | Rain streaks and the wave drift run; with `prefers-reduced-motion: reduce` both have no animation | As expected. PASSED | None |
 | Screenshots, both themes | Text never over buildings or rain; rain only in the sky above the roofs; no overflow or console errors | As expected after one fix. PASSED | The first try drew the buildings semi-transparent, so streaks showed through the walls; they are now solid, darker shades of the panel colour |
+
+### Login and sign-up redesign
+
+Dark gradient sky with canvas rain (bends away from a mouse cursor, ripples where it
+lands, lighter and swaying on touch screens, paused while the tab is hidden), a
+word-by-word headline, glass feature cards that tilt toward the cursor, a frosted form
+card with a moving border light, and a hover shimmer on the main button. No new
+packages: plain CSS plus `frontend/src/pages/RainCanvas.tsx`. Checked in Chromium
+against a scratch server on port 5055, with dummy Google settings on that server only.
+
+| Test | Expected | Actual | Corrective action |
+|------|----------|--------|-------------------|
+| `npm run contrast`, now also over the sky's ends, the horizon glow, the glass cards and the frosted card (as mixes of the tokens) | Every text pair at least 4.5:1 in both themes | Lowest: primary on the frosted card 4.86:1 (light). PASSED | None |
+| Layout at 360×800, 1280×800 and 1280×1080, both themes, `/login` and `/signup` | Words end above the skyline; no horizontal overflow; theme toggle at least 20 px from the edges; sign-up fits 1280×1080 without scrolling | Words end at 166 / 526 px, skyline starts at 178 / 557 px (1280×800); toggle 20 px (phone), 32 px (desktop); sign-up 1080 px high at 1280×1080. PASSED | None |
+| Layout shift, measured with the `layout-shift` performance entries | Nothing moves while the page loads, including when the Google button arrives | 0 everywhere after one fix. PASSED | Sign-up at 360 px first scored 0.0075: a blurred background light was pinned to the bottom of the form side and moved as the card filled in. It is now placed from the top; the card's contents fade in once the session (and so the Google button) is known |
+| Motion | Rain draws and changes between frames; headline and border animations run; with `prefers-reduced-motion: reduce` the canvas stays empty, no animation runs, and the hover lift and tilt are off, with all content shown | As expected. PASSED | None |
+| Tab hidden | The rain loop stops while hidden and resumes when shown | Canvas unchanged over 300 ms while hidden; changes again when shown. PASSED | None |
+| Hover, 1280 px dark | A headline word lifts 4 px and turns the accent colour; a feature card tilts and lights its edge near the cursor | As expected. PASSED | None |
+| Screenshots at 360 and 1280 px, both themes, opened and checked by eye | Skyline clearly visible with lit windows and a horizon glow; frosted card on a gradient; Google button above "or with email"; Name and Organisation side by side on wide screens | As expected after one fix. PASSED | At 360 px the tallest back towers were cut flat at the top of the skyline box; the top of that box now fades out on small screens |
+| Vitest; `pytest tests/test_dashboard.py` | All pass | 94 passed; 16 passed. PASSED | None |

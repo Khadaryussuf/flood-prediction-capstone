@@ -95,7 +95,7 @@ export function LoginPage() {
           value={email} onChange={(event) => setEmail(event.target.value)} />
         <PasswordField label="Password" id="password" autoComplete="current-password" required
           value={password} onChange={(event) => setPassword(event.target.value)} />
-        <Button type="submit" size="lg" className="h-10" disabled={busy}>
+        <Button type="submit" size="lg" className="fw-shimmer h-10" disabled={busy}>
           {busy ? 'Logging in…' : 'Log in'}
         </Button>
       </form>

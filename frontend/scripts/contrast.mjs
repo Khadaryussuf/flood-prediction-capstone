@@ -19,6 +19,11 @@ function luminance(hex) {
   })
   return 0.2126 * r + 0.7152 * g + 0.0722 * b
 }
+/** a with t of b mixed in, like CSS color-mix(in srgb, a, b t) */
+function mix(a, b, t) {
+  const channel = (hex, i) => parseInt(hex.slice(i, i + 2), 16)
+  return '#' + [1, 3, 5].map((i) => Math.round(channel(a, i) * (1 - t) + channel(b, i) * t).toString(16).padStart(2, '0')).join('')
+}
 function ratio(a, b) {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x)
   return (hi + 0.05) / (lo + 0.05)
@@ -46,14 +51,34 @@ const PAIRS = [
   ['brand-foreground', 'brand', 4.5],
   ['brand-muted', 'brand', 4.5],
   ['brand-accent', 'brand', 3],
+  // The login sky is a gradient: check text on its ends too, and on the horizon glow
+  ['brand-foreground', 'brand-sky-top', 4.5],
+  ['brand-foreground', 'brand-sky-bottom', 4.5],
+  ['brand-muted', 'brand-sky-top', 4.5],
+  ['brand-muted', 'brand-sky-bottom', 4.5],
+  ['brand-muted', 'sky glow', 4.5],
+  ['brand-muted', 'glass card', 4.5],
+  // The frosted form card, over the brightest part of the light behind it
+  ['card-foreground', 'frosted card', 4.5],
+  ['muted-foreground', 'frosted card', 4.5],
+  ['primary', 'frosted card', 4.5],
+  ['destructive', 'frosted card', 4.5],
 ]
+
+// Surfaces that are mixes of tokens, as index.css draws them (.fw-sky, .fw-glass,
+// .fw-auth-side, .fw-orb-a and .fw-frost), at their least favourable point
+const SURFACES = {
+  'sky glow': (t) => mix(t['brand-sky-bottom'], t['brand-accent'], 0.12),
+  'glass card': (t) => mix(t['brand-sky-bottom'], t['brand-foreground'], 0.10),
+  'frosted card': (t, dark) => mix(t.card, mix(t.background, t.primary, dark ? 0.16 : 0.22), 0.28),
+}
 
 let failed = 0
 for (const [theme, selector] of [['light', ':root'], ['dark', '.dark']]) {
   const t = tokens(selector)
   console.log(`\n${theme}`)
   for (const [fg, bg, min] of PAIRS) {
-    const r = ratio(t[fg], t[bg])
+    const r = ratio(t[fg], SURFACES[bg] ? SURFACES[bg](t, theme === 'dark') : t[bg])
     const ok = r >= min
     if (!ok) failed++
     console.log(`  ${ok ? 'pass' : 'FAIL'}  ${r.toFixed(2).padStart(5)}:1 (min ${min})  ${fg} on ${bg}`)
